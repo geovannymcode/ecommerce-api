@@ -1,13 +1,9 @@
 package com.geovannycode.ecommerce.catalog;
 
-import com.geovannycode.ecommerce.catalog.infrastructure.TestcontainersConfiguration;
+import com.geovannycode.ecommerce.catalog.infrastructure.integration.AbstractIT;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 
-@Import(TestcontainersConfiguration.class)
-@SpringBootTest
-class ProductServiceApplicationTests {
+class ProductServiceApplicationTests extends AbstractIT {
 
     @Test
     void contextLoads() {}
