@@ -1,9 +1,15 @@
 package com.geovannycode.ecommerce.catalog;
 
-import com.geovannycode.ecommerce.catalog.infrastructure.integration.AbstractIT;
-import org.junit.jupiter.api.Test;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-class ProductServiceApplicationTests extends AbstractIT {
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.testcontainers.utility.TestcontainersConfiguration;
+
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+@Import(TestcontainersConfiguration.class)
+class ProductServiceApplicationTests {
 
     @Test
     void contextLoads() {}
