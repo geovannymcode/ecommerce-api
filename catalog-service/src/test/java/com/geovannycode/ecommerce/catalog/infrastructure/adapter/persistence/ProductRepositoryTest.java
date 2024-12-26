@@ -16,7 +16,7 @@ import org.springframework.test.context.jdbc.Sql;
 @DataJpaTest(
         properties = {
             "spring.test.database.replace=none",
-            "spring.datasource.url=jdbc:tc:postgres:17-alpine:///db",
+            "spring.datasource.url=jdbc:tc:postgresql:17-alpine:///db",
         })
 @Sql("/test-data.sql")
 public class ProductRepositoryTest {
