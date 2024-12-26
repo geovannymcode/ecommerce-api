@@ -16,7 +16,7 @@ import org.springframework.test.context.jdbc.Sql;
 @DataJpaTest(
         properties = {
             "spring.test.database.replace=none",
-            "spring.datasource.url=jdbc:tc:postgresql:16-alpine:///db",
+            "spring.datasource.url=jdbc:tc:postgres:17-alpine:///db",
         })
 @Sql("/test-data.sql")
 public class ProductRepositoryTest {
@@ -26,16 +26,11 @@ public class ProductRepositoryTest {
 
     @Test
     void shouldGetAllProducts() {
-        // Configuramos la paginación para obtener todos los productos
         Pageable pageable = PageRequest.of(0, 20, Sort.by("name").ascending());
         Page<Product> productPage = springDataProductRepository.findAll(pageable);
-
-        // Verificamos que se obtengan 15 productos
         assertThat(productPage.getContent()).hasSize(15);
-
-        // Validamos algunos productos (opcional)
         Product firstProduct = productPage.getContent().get(0);
-        assertThat(firstProduct.getStock()).isGreaterThan(0); // Validamos que el stock sea mayor a 0
+        assertThat(firstProduct.getStock()).isGreaterThan(0);
     }
 
     @Test
