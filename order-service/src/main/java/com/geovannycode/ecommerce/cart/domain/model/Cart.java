@@ -1,33 +1,31 @@
 package com.geovannycode.ecommerce.cart.domain.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.redis.core.RedisHash;
-
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import lombok.Builder;
+import lombok.Getter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.redis.core.RedisHash;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 @RedisHash("carts")
 public class Cart {
 
     @Id
     private String cartId;
-    private String customerId;
+
+    @Getter
     private Set<CartItem> items = new HashSet<>();
 
     public Cart(String cartId) {
         this.cartId = cartId;
+    }
+
+    public Cart(String cartId, Set<CartItem> items) {
+        this.cartId = cartId;
+        this.items = items;
     }
 
     public static Cart withNewId() {
@@ -71,5 +69,13 @@ public class Cart {
 
     public BigDecimal getCartTotal() {
         return items.stream().map(CartItem::getSubTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public String getId() {
+        return cartId;
+    }
+
+    public void setId(String cartId) {
+        this.cartId = cartId;
     }
 }

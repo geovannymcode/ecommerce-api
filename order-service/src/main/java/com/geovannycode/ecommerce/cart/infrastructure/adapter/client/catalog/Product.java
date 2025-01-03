@@ -10,6 +10,4 @@ public record Product(
         String imageUrl,
         BigDecimal price,
         BigDecimal discount,
-        BigDecimal salePrice
-) {
-}
+        BigDecimal salePrice) {}

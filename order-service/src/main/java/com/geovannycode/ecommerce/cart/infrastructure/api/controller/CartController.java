@@ -29,8 +29,7 @@ public class CartController {
     }
 
     @GetMapping
-    public ResponseEntity<Cart> getCart(
-            @RequestParam(name = "cartId", required = false) String cartId) {
+    public ResponseEntity<Cart> getCart(@RequestParam(name = "cartId", required = false) String cartId) {
         Cart cart = cartService.getCart(cartId);
         return ResponseEntity.ok(cart);
     }
@@ -44,14 +43,12 @@ public class CartController {
 
     @PutMapping
     public Cart updateCartItemQuantity(
-            @RequestParam(name = "cartId") String cartId,
-            @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
+            @RequestParam(name = "cartId") String cartId, @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
         return cartService.updateCartItemQuantity(cartId, cartItemRequest);
     }
 
     @DeleteMapping(value = "/items/{code}")
-    public Cart removeCartItem(
-            @RequestParam(name = "cartId") String cartId, @PathVariable("code") String code) {
+    public Cart removeCartItem(@RequestParam(name = "cartId") String cartId, @PathVariable("code") String code) {
         return cartService.removeCartItem(cartId, code);
     }
 

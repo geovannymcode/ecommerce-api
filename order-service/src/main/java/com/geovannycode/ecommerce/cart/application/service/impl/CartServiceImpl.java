@@ -9,13 +9,20 @@ import com.geovannycode.ecommerce.cart.application.ports.output.CartRepository;
 import com.geovannycode.ecommerce.cart.domain.exception.CartNotFoundException;
 import com.geovannycode.ecommerce.cart.domain.model.Cart;
 import com.geovannycode.ecommerce.cart.domain.model.CartItem;
+import com.geovannycode.ecommerce.cart.infrastructure.adapter.client.catalog.Product;
+import com.geovannycode.ecommerce.cart.infrastructure.adapter.client.catalog.ProductNotFoundException;
 import com.geovannycode.ecommerce.cart.infrastructure.adapter.client.catalog.ProductServiceClient;
 import com.geovannycode.ecommerce.cart.infrastructure.api.dto.CartItemRequestDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StringUtils;
 
-public class CartServiceImpl implements AddItemToCartUseCase, GetCartUseCase, UpdateCartItemQuantityUseCase, RemoveCartItemUseCase, RemoveCartUseCase {
+public class CartServiceImpl
+        implements AddItemToCartUseCase,
+                GetCartUseCase,
+                UpdateCartItemQuantityUseCase,
+                RemoveCartItemUseCase,
+                RemoveCartUseCase {
 
     private static final Logger log = LoggerFactory.getLogger(CartServiceImpl.class);
 
@@ -27,7 +34,6 @@ public class CartServiceImpl implements AddItemToCartUseCase, GetCartUseCase, Up
         this.productServiceClient = productServiceClient;
     }
 
-
     @Override
     public Cart addToCart(String cartId, CartItemRequestDTO cartItemRequest) {
         Cart cart;
@@ -37,8 +43,15 @@ public class CartServiceImpl implements AddItemToCartUseCase, GetCartUseCase, Up
             cart = cartRepository.findById(cartId).orElseThrow(() -> new CartNotFoundException(cartId));
         }
         log.info("Add code: {} to cart", cartItemRequest.code());
-        Product product = productServiceClient.getProductByCode(cartItemRequest.code()).orElseThrow(() -> new ProductNotFoundException(cartItemRequest.code()));
-        CartItem cartItem = new CartItem(product.code(), product.name(), product.description(), product.price(), cartItemRequest.quantity() > 0 ? cartItemRequest.quantity() : 1);
+        Product product = productServiceClient
+                .getProductByCode(cartItemRequest.code())
+                .orElseThrow(() -> new ProductNotFoundException(cartItemRequest.code()));
+        CartItem cartItem = new CartItem(
+                product.code(),
+                product.name(),
+                product.description(),
+                product.price(),
+                cartItemRequest.quantity() > 0 ? cartItemRequest.quantity() : 1);
         cart.addItem(cartItem);
         return cartRepository.save(cart);
     }
@@ -67,12 +80,18 @@ public class CartServiceImpl implements AddItemToCartUseCase, GetCartUseCase, Up
     @Override
     public Cart updateCartItemQuantity(String cartId, CartItemRequestDTO cartItemRequest) {
         Cart cart = cartRepository.findById(cartId).orElseThrow(() -> new CartNotFoundException(cartId));
-        log.info("Update quantity: {} for code:{} quantity in cart: {}", cartItemRequest.quantity(), cartItemRequest.code(), cartId);
+        log.info(
+                "Update quantity: {} for code:{} quantity in cart: {}",
+                cartItemRequest.quantity(),
+                cartItemRequest.code(),
+                cartId);
 
         if (cartItemRequest.quantity() <= 0) {
             cart.removeItem(cartItemRequest.code());
         } else {
-            Product product = productServiceClient.getProductByCode(cartItemRequest.code()).orElseThrow(() -> new ProductNotFoundException(cartItemRequest.code()));
+            Product product = productServiceClient
+                    .getProductByCode(cartItemRequest.code())
+                    .orElseThrow(() -> new ProductNotFoundException(cartItemRequest.code()));
             cart.updateItemQuantity(product.code(), cartItemRequest.quantity());
         }
         return cartRepository.save(cart);

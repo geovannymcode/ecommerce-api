@@ -1,6 +1,6 @@
 package com.geovannycode.ecommerce.cart.domain.exception;
 
-public class CartNotFoundException extends RuntimeException{
+public class CartNotFoundException extends RuntimeException {
     public CartNotFoundException(String message) {
         super(message);
     }

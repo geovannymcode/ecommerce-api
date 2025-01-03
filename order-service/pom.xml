@@ -20,6 +20,8 @@
 		<lombok.version>1.18.32</lombok.version>
 		<resilience4j.version>2.2.0</resilience4j.version>
 		<shedlock.version>6.0.2</shedlock.version>
+		<wiremock.version>3.10.0</wiremock.version>
+		<wiremock-testcontainers.version>1.0-alpha-14</wiremock-testcontainers.version>
 		<dockerImageName>gmendozag/ecommerce-${project.artifactId}</dockerImageName>
 	</properties>
 	<dependencies>
@@ -97,10 +99,33 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.wiremock</groupId>
+			<artifactId>wiremock-standalone</artifactId>
+			<version>${wiremock.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.wiremock.integrations.testcontainers</groupId>
+			<artifactId>wiremock-testcontainers-module</artifactId>
+			<version>${wiremock-testcontainers.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.wiremock</groupId>
+			<artifactId>wiremock</artifactId>
+			<version>3.10.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.amqp</groupId>
 			<artifactId>spring-rabbit-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+		<groupId>io.rest-assured</groupId>
+		<artifactId>rest-assured</artifactId>
+		<scope>test</scope>
+	</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
 			<artifactId>junit-jupiter</artifactId>
