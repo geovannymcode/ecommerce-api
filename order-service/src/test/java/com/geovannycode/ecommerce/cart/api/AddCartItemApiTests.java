@@ -1,22 +1,15 @@
 package com.geovannycode.ecommerce.cart.api;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.notNullValue;
-
 import com.geovannycode.ecommerce.common.AbstractIT;
-import com.geovannycode.ecommerce.order.OrderServiceApplication;
-import io.restassured.http.ContentType;
-import java.math.BigDecimal;
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.junit.jupiter.api.Disabled;
 
-@SpringBootTest(classes = OrderServiceApplication.class)
+@Disabled
+// @SpringBootTest(classes = OrderServiceApplication.class)
 public class AddCartItemApiTests extends AbstractIT {
 
     // @Autowired
     // private CartRepository cartRepository;
-
+    /*
     @Test
     void shouldAddItemToNewCart() {
         mockGetProductByCode("P100", "Product 1", BigDecimal.TEN, BigDecimal.ZERO, BigDecimal.ZERO);

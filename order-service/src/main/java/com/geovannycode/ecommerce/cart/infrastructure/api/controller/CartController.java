@@ -1,6 +1,10 @@
 package com.geovannycode.ecommerce.cart.infrastructure.api.controller;
 
-import com.geovannycode.ecommerce.cart.application.service.impl.CartServiceImpl;
+import com.geovannycode.ecommerce.cart.application.ports.input.AddItemToCartUseCase;
+import com.geovannycode.ecommerce.cart.application.ports.input.GetCartUseCase;
+import com.geovannycode.ecommerce.cart.application.ports.input.RemoveCartItemUseCase;
+import com.geovannycode.ecommerce.cart.application.ports.input.RemoveCartUseCase;
+import com.geovannycode.ecommerce.cart.application.ports.input.UpdateCartItemQuantityUseCase;
 import com.geovannycode.ecommerce.cart.domain.model.Cart;
 import com.geovannycode.ecommerce.cart.infrastructure.api.dto.CartItemRequestDTO;
 import jakarta.validation.Valid;
@@ -22,15 +26,28 @@ import org.springframework.web.bind.annotation.RestController;
 public class CartController {
     private static final Logger log = LoggerFactory.getLogger(CartController.class);
 
-    private final CartServiceImpl cartService;
+    private final AddItemToCartUseCase addItemToCartUseCase;
+    private final GetCartUseCase getCartUseCase;
+    private final RemoveCartItemUseCase removeCartItemUseCase;
+    private final RemoveCartUseCase removeCartUseCase;
+    private final UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
 
-    public CartController(CartServiceImpl cartService) {
-        this.cartService = cartService;
+    public CartController(
+            AddItemToCartUseCase addItemToCartUseCase,
+            GetCartUseCase getCartUseCase,
+            RemoveCartItemUseCase removeCartItemUseCase,
+            RemoveCartUseCase removeCartUseCase,
+            UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase) {
+        this.addItemToCartUseCase = addItemToCartUseCase;
+        this.getCartUseCase = getCartUseCase;
+        this.removeCartItemUseCase = removeCartItemUseCase;
+        this.removeCartUseCase = removeCartUseCase;
+        this.updateCartItemQuantityUseCase = updateCartItemQuantityUseCase;
     }
 
     @GetMapping
     public ResponseEntity<Cart> getCart(@RequestParam(name = "cartId", required = false) String cartId) {
-        Cart cart = cartService.getCart(cartId);
+        Cart cart = getCartUseCase.getCart(cartId);
         return ResponseEntity.ok(cart);
     }
 
@@ -38,22 +55,23 @@ public class CartController {
     public Cart addToCart(
             @RequestParam(name = "cartId", required = false) String cartId,
             @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
-        return cartService.addToCart(cartId, cartItemRequest);
+        log.info("Adding to cart with cartId={} and request={}", cartId, cartItemRequest);
+        return addItemToCartUseCase.addToCart(cartId, cartItemRequest);
     }
 
     @PutMapping
     public Cart updateCartItemQuantity(
             @RequestParam(name = "cartId") String cartId, @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
-        return cartService.updateCartItemQuantity(cartId, cartItemRequest);
+        return updateCartItemQuantityUseCase.updateCartItemQuantity(cartId, cartItemRequest);
     }
 
     @DeleteMapping(value = "/items/{code}")
     public Cart removeCartItem(@RequestParam(name = "cartId") String cartId, @PathVariable("code") String code) {
-        return cartService.removeCartItem(cartId, code);
+        return removeCartItemUseCase.removeCartItem(cartId, code);
     }
 
     @DeleteMapping
     public void removeCart(@RequestParam(name = "cartId") String cartId) {
-        cartService.removeCart(cartId);
+        removeCartUseCase.removeCart(cartId);
     }
 }

@@ -15,8 +15,10 @@ import com.geovannycode.ecommerce.cart.infrastructure.adapter.client.catalog.Pro
 import com.geovannycode.ecommerce.cart.infrastructure.api.dto.CartItemRequestDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+@Service
 public class CartServiceImpl
         implements AddItemToCartUseCase,
                 GetCartUseCase,
