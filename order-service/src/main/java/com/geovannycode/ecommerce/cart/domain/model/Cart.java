@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import lombok.Builder;
-import lombok.Getter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
@@ -16,8 +15,12 @@ public class Cart {
     @Id
     private String cartId;
 
-    @Getter
     private Set<CartItem> items = new HashSet<>();
+
+    public Cart() {
+        this.cartId = UUID.randomUUID().toString();
+        this.items = new HashSet<>();
+    }
 
     public Cart(String cartId) {
         this.cartId = cartId;
@@ -25,11 +28,11 @@ public class Cart {
 
     public Cart(String cartId, Set<CartItem> items) {
         this.cartId = cartId;
-        this.items = items;
+        this.items = items != null ? new HashSet<>(items) : new HashSet<>();
     }
 
     public static Cart withNewId() {
-        return new Cart(UUID.randomUUID().toString());
+        return new Cart(UUID.randomUUID().toString(), new HashSet<>());
     }
 
     public void addItem(CartItem item) {
@@ -77,5 +80,13 @@ public class Cart {
 
     public void setId(String cartId) {
         this.cartId = cartId;
+    }
+
+    public Set<CartItem> getItems() {
+        return items;
+    }
+
+    public void setItems(Set<CartItem> items) {
+        this.items = items;
     }
 }
