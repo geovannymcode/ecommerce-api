@@ -8,7 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import org.springframework.data.annotation.Id;
+import jakarta.persistence.Id;
 
 import java.math.BigDecimal;
 
@@ -16,7 +16,6 @@ import java.math.BigDecimal;
 @Table(name = "order_items")
 public class OrderItem {
 
-    @jakarta.persistence.Id
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_item_id_generator")
     @SequenceGenerator(name = "order_item_id_generator", sequenceName = "order_item_id_seq")
@@ -36,6 +35,17 @@ public class OrderItem {
     @ManyToOne(optional = false)
     @JoinColumn(name = "order_id")
     private Order order;
+
+    public OrderItem(String code, String name, BigDecimal price, Integer quantity) {
+        this.code = code;
+        this.name = name;
+        this.price = price;
+        this.quantity = quantity;
+    }
+
+    public OrderItem() {
+
+    }
 
     public Long getId() {
         return id;
