@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.domain.model;
+package com.geovannycode.ecommerce.order.infrastructure.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
-public class OrderItem {
+public class OrderItemEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_item_id_generator")
@@ -34,16 +34,16 @@ public class OrderItem {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "order_id")
-    private Order order;
+    private OrderEntity orderEntity;
 
-    public OrderItem(String code, String name, BigDecimal price, Integer quantity) {
+    public OrderItemEntity(String code, String name, BigDecimal price, Integer quantity) {
         this.code = code;
         this.name = name;
         this.price = price;
         this.quantity = quantity;
     }
 
-    public OrderItem() {
+    public OrderItemEntity() {
 
     }
 
@@ -87,12 +87,12 @@ public class OrderItem {
         this.quantity = quantity;
     }
 
-    public Order getOrder() {
-        return order;
+    public OrderEntity getOrder() {
+        return orderEntity;
     }
 
-    public void setOrder(Order order) {
-        this.order = order;
+    public void setOrder(OrderEntity orderEntity) {
+        this.orderEntity = orderEntity;
     }
 
 }

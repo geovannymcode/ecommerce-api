@@ -16,7 +16,7 @@
     </properties>
     <modules>
         <module>catalog-service</module>
-        <module>order-service</module>
+        <module>orderEntity-service</module>
     </modules>
 
     <build>

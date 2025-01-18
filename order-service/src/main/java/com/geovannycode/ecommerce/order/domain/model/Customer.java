@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.infrastructure.api.dto;
+package com.geovannycode.ecommerce.order.domain.model;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

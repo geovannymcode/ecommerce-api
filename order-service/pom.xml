@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.geovannycode.ecommerce</groupId>
-	<artifactId>order-service</artifactId>
+	<artifactId>orderEntity-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>order-service</name>
-	<description>order-service</description>
+	<name>orderEntity-service</name>
+	<description>orderEntity-service</description>
 
 	<properties>
 		<java.version>21</java.version>

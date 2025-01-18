@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.infrastructure.api.dto;
+package com.geovannycode.ecommerce.order.application.dto;
 
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
 

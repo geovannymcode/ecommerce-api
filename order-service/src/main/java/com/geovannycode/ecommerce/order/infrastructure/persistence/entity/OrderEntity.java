@@ -1,8 +1,8 @@
-package com.geovannycode.ecommerce.order.domain.model;
+package com.geovannycode.ecommerce.order.infrastructure.persistence.entity;
 
+import com.geovannycode.ecommerce.order.domain.model.Address;
+import com.geovannycode.ecommerce.order.domain.model.Customer;
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
-import com.geovannycode.ecommerce.order.infrastructure.api.dto.Address;
-import com.geovannycode.ecommerce.order.infrastructure.api.dto.Customer;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
@@ -23,7 +23,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "orders")
-public class Order {
+public class OrderEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_id_generator")
@@ -37,7 +37,7 @@ public class Order {
     private String userName;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "order")
-    private Set<OrderItem> items;
+    private Set<OrderItemEntity> items;
 
     @Embedded
     @AttributeOverrides(
@@ -95,11 +95,11 @@ public class Order {
         this.userName = userName;
     }
 
-    public Set<OrderItem> getItems() {
+    public Set<OrderItemEntity> getItems() {
         return items;
     }
 
-    public void setItems(Set<OrderItem> items) {
+    public void setItems(Set<OrderItemEntity> items) {
         this.items = items;
     }
 

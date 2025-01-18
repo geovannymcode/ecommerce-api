@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.domain.model;
+package com.geovannycode.ecommerce.order.infrastructure.persistence.entity;
 
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderEventType;
 import jakarta.persistence.Column;
@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "order_events")
-public class OrderEvent {
+public class OrderEventEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_event_id_generator")
