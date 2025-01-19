@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 
 @Component
-class OrderValidator {
+public class OrderValidator {
     private static final Logger log = LoggerFactory.getLogger(OrderValidator.class);
 
     private final ProductServiceClient client;
@@ -21,7 +21,7 @@ class OrderValidator {
         this.client = client;
     }
 
-    void validate(CreateOrderRequest request) {
+    public void validate(CreateOrderRequest request) {
         Set<OrderItemDTO> items = request.items();
         for (OrderItemDTO item : items) {
             Product product = client.getProductByCode(item.code())

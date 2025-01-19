@@ -9,7 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-class OrderEventPublisher {
+public class OrderEventPublisher {
     private final RabbitTemplate rabbitTemplate;
     private final ApplicationProperties properties;
 

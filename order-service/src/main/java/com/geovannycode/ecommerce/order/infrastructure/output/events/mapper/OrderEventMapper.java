@@ -1,7 +1,7 @@
 package com.geovannycode.ecommerce.order.infrastructure.output.events.mapper;
 
+import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderItemDTO;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
-import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderItemEntity;
 import com.geovannycode.ecommerce.order.domain.events.OrderCancelledEvent;
 import com.geovannycode.ecommerce.order.domain.events.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.domain.events.OrderDeliveredEvent;
@@ -12,53 +12,53 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-class OrderEventMapper {
+public class OrderEventMapper {
 
-    static OrderCreatedEvent buildOrderCreatedEvent(OrderEntity orderEntity) {
+    public static OrderCreatedEvent buildOrderCreatedEvent(OrderEntity order) {
         return new OrderCreatedEvent(
                 UUID.randomUUID().toString(),
-                orderEntity.getOrderNumber(),
-                getOrderItems(orderEntity),
-                orderEntity.getCustomer(),
-                orderEntity.getDeliveryAddress(),
+                order.getOrderNumber(),
+                getOrderItems(order),
+                order.getCustomer(),
+                order.getDeliveryAddress(),
                 LocalDateTime.now());
     }
 
-    static OrderDeliveredEvent buildOrderDeliveredEvent(OrderEntity orderEntity) {
+    public static OrderDeliveredEvent buildOrderDeliveredEvent(OrderEntity order) {
         return new OrderDeliveredEvent(
                 UUID.randomUUID().toString(),
-                orderEntity.getOrderNumber(),
-                getOrderItems(orderEntity),
-                orderEntity.getCustomer(),
-                orderEntity.getDeliveryAddress(),
+                order.getOrderNumber(),
+                getOrderItems(order),
+                order.getCustomer(),
+                order.getDeliveryAddress(),
                 LocalDateTime.now());
     }
 
-    static OrderCancelledEvent buildOrderCancelledEvent(OrderEntity orderEntity, String reason) {
+    public static OrderCancelledEvent buildOrderCancelledEvent(OrderEntity order, String reason) {
         return new OrderCancelledEvent(
                 UUID.randomUUID().toString(),
-                orderEntity.getOrderNumber(),
-                getOrderItems(orderEntity),
-                orderEntity.getCustomer(),
-                orderEntity.getDeliveryAddress(),
+                order.getOrderNumber(),
+                getOrderItems(order),
+                order.getCustomer(),
+                order.getDeliveryAddress(),
                 reason,
                 LocalDateTime.now());
     }
 
-    static OrderErrorEvent buildOrderErrorEvent(OrderEntity orderEntity, String reason) {
+    public static OrderErrorEvent buildOrderErrorEvent(OrderEntity order, String reason) {
         return new OrderErrorEvent(
                 UUID.randomUUID().toString(),
-                orderEntity.getOrderNumber(),
-                getOrderItems(orderEntity),
-                orderEntity.getCustomer(),
-                orderEntity.getDeliveryAddress(),
+                order.getOrderNumber(),
+                getOrderItems(order),
+                order.getCustomer(),
+                order.getDeliveryAddress(),
                 reason,
                 LocalDateTime.now());
     }
 
-    private static Set<OrderItemEntity> getOrderItems(OrderEntity orderEntity) {
-        return orderEntity.getItems().stream()
-                .map(item -> new OrderItemEntity(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
+    private static Set<OrderItemDTO> getOrderItems(OrderEntity order) {
+        return order.getItems().stream()
+                .map(item -> new OrderItemDTO(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                 .collect(Collectors.toSet());
     }
 }

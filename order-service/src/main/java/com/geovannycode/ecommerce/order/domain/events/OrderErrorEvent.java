@@ -1,6 +1,6 @@
 package com.geovannycode.ecommerce.order.domain.events;
 
-import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderItemEntity;
+import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderItemDTO;
 import com.geovannycode.ecommerce.order.domain.model.Address;
 import com.geovannycode.ecommerce.order.domain.model.Customer;
 
@@ -10,7 +10,7 @@ import java.util.Set;
 public record OrderErrorEvent(
         String eventId,
         String orderNumber,
-        Set<OrderItemEntity> items,
+        Set<OrderItemDTO> items,
         Customer customer,
         Address deliveryAddress,
         String reason,

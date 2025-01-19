@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.cart.application.service.impl;
+package com.geovannycode.ecommerce.cart.application.service;
 
 import com.geovannycode.ecommerce.cart.application.ports.input.AddItemToCartUseCase;
 import com.geovannycode.ecommerce.cart.application.ports.input.GetCartUseCase;
@@ -19,19 +19,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
-public class CartServiceImpl
+public class CartService
         implements AddItemToCartUseCase,
                 GetCartUseCase,
                 UpdateCartItemQuantityUseCase,
                 RemoveCartItemUseCase,
                 RemoveCartUseCase {
 
-    private static final Logger log = LoggerFactory.getLogger(CartServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(CartService.class);
 
     private final CartRepository cartRepository;
     private final ProductServiceClient productServiceClient;
 
-    public CartServiceImpl(CartRepository cartRepository, ProductServiceClient productServiceClient) {
+    public CartService(CartRepository cartRepository, ProductServiceClient productServiceClient) {
         this.cartRepository = cartRepository;
         this.productServiceClient = productServiceClient;
     }

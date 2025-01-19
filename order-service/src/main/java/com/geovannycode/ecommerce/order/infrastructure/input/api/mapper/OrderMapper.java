@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class OrderMapper {
 
-    static OrderEntity convertToEntity(CreateOrderRequest request) {
+    public static OrderEntity convertToEntity(CreateOrderRequest request) {
         OrderEntity newOrder = new OrderEntity();
         newOrder.setOrderNumber(UUID.randomUUID().toString());
         newOrder.setStatus(OrderStatus.NEW);
@@ -34,7 +34,7 @@ public class OrderMapper {
         return newOrder;
     }
 
-    static OrderDTO convertToDTO(OrderEntity order) {
+    public static OrderDTO convertToDTO(OrderEntity order) {
         Set<OrderItemDTO> orderItems = order.getItems().stream()
                 .map(item -> new OrderItemDTO(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                 .collect(Collectors.toSet());
