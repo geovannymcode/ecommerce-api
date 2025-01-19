@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.cart.infrastructure.config;
+package com.geovannycode.ecommerce.cart.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

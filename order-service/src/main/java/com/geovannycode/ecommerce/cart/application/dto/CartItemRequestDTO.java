@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.cart.infrastructure.api.dto;
+package com.geovannycode.ecommerce.cart.application.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;

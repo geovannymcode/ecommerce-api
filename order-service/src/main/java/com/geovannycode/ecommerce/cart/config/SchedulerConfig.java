@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.cart.infrastructure.config;
+package com.geovannycode.ecommerce.cart.config;
 
 import javax.sql.DataSource;
 import net.javacrumbs.shedlock.core.LockProvider;

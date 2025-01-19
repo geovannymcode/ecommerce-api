@@ -3,7 +3,6 @@ package com.geovannycode.ecommerce.order.infrastructure.input.api.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.geovannycode.ecommerce.order.domain.model.Address;
 import com.geovannycode.ecommerce.order.domain.model.Customer;
-import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderItemEntity;
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
 
 import java.math.BigDecimal;
@@ -13,7 +12,7 @@ import java.util.Set;
 public record OrderDTO(
         String orderNumber,
         String user,
-        Set<OrderItemEntity> items,
+        Set<OrderItemDTO> items,
         Customer customer,
         Address deliveryAddress,
         OrderStatus status,
@@ -23,7 +22,7 @@ public record OrderDTO(
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public BigDecimal getTotalAmount() {
         return items.stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

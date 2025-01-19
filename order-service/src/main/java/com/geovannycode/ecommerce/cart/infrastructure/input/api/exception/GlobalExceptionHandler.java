@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.cart.infrastructure.api.exception;
+package com.geovannycode.ecommerce.cart.infrastructure.input.api.exception;
 
 import com.geovannycode.ecommerce.cart.domain.exception.CartNotFoundException;
 import java.net.URI;

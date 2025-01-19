@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.cart.infrastructure.adapter.client.catalog;
+package com.geovannycode.ecommerce.cart.infrastructure.output.client.catalog;
 
 import java.math.BigDecimal;
 

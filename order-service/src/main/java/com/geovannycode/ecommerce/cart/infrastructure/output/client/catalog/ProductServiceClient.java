@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.cart.infrastructure.adapter.client.catalog;
+package com.geovannycode.ecommerce.cart.infrastructure.output.client.catalog;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
