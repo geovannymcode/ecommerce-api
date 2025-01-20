@@ -19,6 +19,16 @@ services:
         limits:
           memory: 500m
 
+  payment-db:
+    image: postgres:17-alpine
+    container_name: payment-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "25432:5432"
+
   orders-db:
     image: postgres:17-alpine
     container_name: orders-db
@@ -27,7 +37,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
     ports:
-      - "25432:5432"
+      - "35432:5432"
 
   orders-redis:
     image: redis:7.0.5-alpine
