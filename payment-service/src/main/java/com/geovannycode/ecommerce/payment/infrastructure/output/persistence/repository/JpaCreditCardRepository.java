@@ -4,7 +4,6 @@ import com.geovannycode.ecommerce.payment.application.ports.output.CreditCardRep
 import com.geovannycode.ecommerce.payment.domain.model.CreditCard;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Optional;
 
