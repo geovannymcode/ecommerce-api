@@ -24,5 +24,4 @@ public interface SpringDataProductRepository extends JpaRepository<Product, Long
     ORDER BY p.name ASC
 """)
     Page<Product> searchProductsByCriteria(@Param("query") String query, Pageable pageable);
-
 }

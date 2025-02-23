@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geovannycode.ecommerce.catalog.TestcontainersConfiguration;
 import com.geovannycode.ecommerce.catalog.infrastructure.api.dto.ProductDto;
+import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,8 +20,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.math.BigDecimal;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
@@ -68,9 +67,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldSearchProducts() throws Exception {
-        mockMvc.perform(get("/api/products/search")
-                        .param("query", "The")
-                        .param("page", "1"))
+        mockMvc.perform(get("/api/products/search").param("query", "The").param("page", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].name").value(is("The Alchemist")));
@@ -86,8 +83,7 @@ public class ProductControllerTest {
                 new BigDecimal("25.0"),
                 100,
                 null,
-                BigDecimal.ZERO
-        );
+                BigDecimal.ZERO);
 
         mockMvc.perform(post("/api/products")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -100,13 +96,10 @@ public class ProductControllerTest {
     @Test
     void shouldDeleteProduct() throws Exception {
 
-        mockMvc.perform(get("/api/products/{code}", "P100"))
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/products/{code}", "P100")).andExpect(status().isOk());
 
-        mockMvc.perform(delete("/api/products/{code}", "P100"))
-                .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/products/{code}", "P100")).andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/products/{code}", "P100"))
-                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/products/{code}", "P100")).andExpect(status().isNotFound());
     }
 }
