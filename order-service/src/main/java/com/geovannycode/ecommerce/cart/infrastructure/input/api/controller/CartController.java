@@ -1,12 +1,12 @@
 package com.geovannycode.ecommerce.cart.infrastructure.input.api.controller;
 
+import com.geovannycode.ecommerce.cart.application.dto.CartItemRequestDTO;
 import com.geovannycode.ecommerce.cart.application.ports.input.AddItemToCartUseCase;
 import com.geovannycode.ecommerce.cart.application.ports.input.GetCartUseCase;
 import com.geovannycode.ecommerce.cart.application.ports.input.RemoveCartItemUseCase;
 import com.geovannycode.ecommerce.cart.application.ports.input.RemoveCartUseCase;
 import com.geovannycode.ecommerce.cart.application.ports.input.UpdateCartItemQuantityUseCase;
 import com.geovannycode.ecommerce.cart.domain.model.Cart;
-import com.geovannycode.ecommerce.cart.application.dto.CartItemRequestDTO;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

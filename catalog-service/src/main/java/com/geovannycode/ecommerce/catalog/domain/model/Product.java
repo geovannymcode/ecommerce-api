@@ -46,4 +46,8 @@ public class Product {
     private BigDecimal price;
 
     private Integer stock;
+
+    private BigDecimal discount;
+
+    private boolean deleted = Boolean.FALSE;
 }

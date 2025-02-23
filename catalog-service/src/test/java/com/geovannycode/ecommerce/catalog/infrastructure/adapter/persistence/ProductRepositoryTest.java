@@ -48,4 +48,44 @@ public class ProductRepositoryTest {
         assertThat(springDataProductRepository.findByCode("invalid_product_code"))
                 .isEmpty();
     }
+
+    @Test
+    void shouldCreateProduct() {
+        Product product = new Product();
+        product.setCode("P115");
+        product.setName("New Product");
+        product.setDescription("This is a new product.");
+        product.setImageUrl("https://example.com/new-product.jpg");
+        product.setPrice(new BigDecimal("25.0"));
+        product.setStock(100);
+        product.setDiscount(null);
+        product.setDeleted(false);
+
+        Product savedProduct = springDataProductRepository.save(product);
+
+        assertThat(savedProduct.getCode()).isEqualTo("P115");
+        assertThat(savedProduct.getName()).isEqualTo("New Product");
+        assertThat(savedProduct.getDescription()).isEqualTo("This is a new product.");
+        assertThat(savedProduct.getPrice()).isEqualTo(new BigDecimal("25.0"));
+        assertThat(savedProduct.getStock()).isEqualTo(100);
+    }
+
+    @Test
+    void shouldDeleteProduct() {
+        springDataProductRepository.findByCode("P100").orElseThrow();
+        springDataProductRepository.deleteByCode("P100");
+
+        assertThat(springDataProductRepository.findByCode("P100")).isEmpty();
+    }
+
+    @Test
+    void shouldSearchProductsByCriteria() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("name").ascending());
+        Page<Product> productPage = springDataProductRepository.searchProductsByCriteria("The", pageable);
+
+        assertThat(productPage.getContent()).isNotEmpty();
+        assertThat(productPage.getContent().stream()
+                        .anyMatch(product -> product.getName().contains("The")))
+                .isTrue();
+    }
 }

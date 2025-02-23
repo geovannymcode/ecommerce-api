@@ -9,4 +9,12 @@ public interface ProductRepository {
     Optional<Product> findByCode(String code);
 
     Page<Product> findAll(Pageable pageable);
+
+    boolean existsProductByCode(String code);
+
+    void deleteProduct(String code);
+
+    Product save(Product product);
+
+    Page<Product> searchProductsByCriteria(String query, Pageable pageable);
 }

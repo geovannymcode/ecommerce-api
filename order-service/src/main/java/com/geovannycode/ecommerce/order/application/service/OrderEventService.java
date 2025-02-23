@@ -10,13 +10,12 @@ import com.geovannycode.ecommerce.order.domain.events.OrderErrorEvent;
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderEventType;
 import com.geovannycode.ecommerce.order.infrastructure.output.events.OrderEventPublisher;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEventEntity;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @Transactional

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.geovannycode.ecommerce.order.domain.model.Address;
 import com.geovannycode.ecommerce.order.domain.model.Customer;
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;

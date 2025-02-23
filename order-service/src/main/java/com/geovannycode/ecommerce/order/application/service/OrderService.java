@@ -12,28 +12,34 @@ import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.CreateOrderRequest;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.CreateOrderResponse;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderDTO;
+import com.geovannycode.ecommerce.order.infrastructure.input.api.mapper.OrderMapper;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.validator.OrderValidator;
+import com.geovannycode.ecommerce.order.infrastructure.output.events.mapper.OrderEventMapper;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
+import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.geovannycode.ecommerce.order.infrastructure.input.api.mapper.OrderMapper;
-import com.geovannycode.ecommerce.order.infrastructure.output.events.mapper.OrderEventMapper;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
-public class OrderService implements CreateOrderUseCase, FindOrdersUseCase, FindUserOrderUseCase, ProcessNewOrdersUseCase {
+public class OrderService
+        implements CreateOrderUseCase, FindOrdersUseCase, FindUserOrderUseCase, ProcessNewOrdersUseCase {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-    private static final List<String> DELIVERY_ALLOWED_COUNTRIES = List.of("BRASIL", "INDIA", "USA", "GERMANY", "COLOMBIA");
+    private static final List<String> DELIVERY_ALLOWED_COUNTRIES =
+            List.of("BRASIL", "INDIA", "USA", "GERMANY", "COLOMBIA");
 
     private final OrderRepository orderRepository;
     private final OrderValidator orderValidator;
     private final OrderEventService orderEventService;
 
-    public OrderService(OrderRepository orderRepository, OrderValidator orderValidator, OrderEventRepository orderEventRepository, OrderEventService orderEventService) {
+    public OrderService(
+            OrderRepository orderRepository,
+            OrderValidator orderValidator,
+            OrderEventRepository orderEventRepository,
+            OrderEventService orderEventService) {
         this.orderRepository = orderRepository;
         this.orderValidator = orderValidator;
         this.orderEventService = orderEventService;
@@ -96,5 +102,4 @@ public class OrderService implements CreateOrderUseCase, FindOrdersUseCase, Find
         return DELIVERY_ALLOWED_COUNTRIES.contains(
                 order.getDeliveryAddress().country().toUpperCase());
     }
-
 }

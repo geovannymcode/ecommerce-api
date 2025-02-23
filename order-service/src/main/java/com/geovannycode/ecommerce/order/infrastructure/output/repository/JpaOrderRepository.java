@@ -4,10 +4,9 @@ import com.geovannycode.ecommerce.order.application.dto.OrderSummary;
 import com.geovannycode.ecommerce.order.application.ports.output.OrderRepository;
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
-import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Repository;
 
 @Repository
 public class JpaOrderRepository implements OrderRepository {
@@ -29,7 +28,8 @@ public class JpaOrderRepository implements OrderRepository {
 
     @Override
     public void updateOrderStatus(String orderNumber, OrderStatus status) {
-        OrderEntity order = springDataOrderRepository.findByOrderNumber(orderNumber).orElseThrow();
+        OrderEntity order =
+                springDataOrderRepository.findByOrderNumber(orderNumber).orElseThrow();
         order.setStatus(status);
         springDataOrderRepository.save(order);
     }

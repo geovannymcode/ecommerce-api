@@ -1,5 +1,6 @@
 package com.geovannycode.ecommerce.cart.application.service;
 
+import com.geovannycode.ecommerce.cart.application.dto.CartItemRequestDTO;
 import com.geovannycode.ecommerce.cart.application.ports.input.AddItemToCartUseCase;
 import com.geovannycode.ecommerce.cart.application.ports.input.GetCartUseCase;
 import com.geovannycode.ecommerce.cart.application.ports.input.RemoveCartItemUseCase;
@@ -12,7 +13,6 @@ import com.geovannycode.ecommerce.cart.domain.model.CartItem;
 import com.geovannycode.ecommerce.cart.infrastructure.output.client.catalog.Product;
 import com.geovannycode.ecommerce.cart.infrastructure.output.client.catalog.ProductNotFoundException;
 import com.geovannycode.ecommerce.cart.infrastructure.output.client.catalog.ProductServiceClient;
-import com.geovannycode.ecommerce.cart.application.dto.CartItemRequestDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

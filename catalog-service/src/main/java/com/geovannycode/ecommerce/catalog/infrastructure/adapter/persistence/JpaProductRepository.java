@@ -25,4 +25,24 @@ public class JpaProductRepository implements ProductRepository {
     public Page<Product> findAll(Pageable pageable) {
         return springDataProductRepository.findAll(pageable);
     }
+
+    @Override
+    public boolean existsProductByCode(String code) {
+        return springDataProductRepository.existsProductByCode(code);
+    }
+
+    @Override
+    public void deleteProduct(String code) {
+        springDataProductRepository.deleteByCode(code);
+    }
+
+    @Override
+    public Product save(Product product) {
+        return springDataProductRepository.save(product);
+    }
+
+    @Override
+    public Page<Product> searchProductsByCriteria(String query, Pageable pageable) {
+        return springDataProductRepository.searchProductsByCriteria(query, pageable);
+    }
 }
