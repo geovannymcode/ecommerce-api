@@ -1,8 +1,11 @@
 package com.geovannycode.ecommerce.payment.infrastructure.adapter.persistence;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.geovannycode.ecommerce.payment.application.ports.output.CreditCardRepository;
 import com.geovannycode.ecommerce.payment.domain.model.CreditCard;
 import com.geovannycode.ecommerce.payment.infrastructure.output.persistence.repository.JpaCreditCardRepository;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,10 +13,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
-
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -36,8 +35,7 @@ public class PaymentRepositoryTest {
 
     @Test
     void shouldGetCreditCardByCardNumber() {
-        Optional<CreditCard> optionalCreditCard =
-                creditCardRepository.findByCardNumber("1111222233334444");
+        Optional<CreditCard> optionalCreditCard = creditCardRepository.findByCardNumber("1111222233334444");
         assertThat(optionalCreditCard).isNotEmpty();
         assertThat(optionalCreditCard.get().cardNumber()).isEqualTo("1111222233334444");
         assertThat(optionalCreditCard.get().cvv()).isEqualTo("123");
@@ -47,8 +45,7 @@ public class PaymentRepositoryTest {
 
     @Test
     void shouldReturnEmptyWhenCardNumberNotFound() {
-        Optional<CreditCard> optionalCreditCard =
-                creditCardRepository.findByCardNumber("1111111111111");
+        Optional<CreditCard> optionalCreditCard = creditCardRepository.findByCardNumber("1111111111111");
         assertThat(optionalCreditCard).isEmpty();
     }
 }

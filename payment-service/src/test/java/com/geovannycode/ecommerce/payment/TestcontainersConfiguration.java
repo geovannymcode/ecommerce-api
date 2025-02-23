@@ -12,13 +12,12 @@ import org.testcontainers.utility.DockerImageName;
 @Testcontainers
 public class TestcontainersConfiguration {
 
-	@Container
-	static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:17-alpine"));
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:17-alpine"));
 
-	@Bean
-	@ServiceConnection
-	PostgreSQLContainer<?> postgresContainer() {
-		return postgres;
-	}
-
+    @Bean
+    @ServiceConnection
+    PostgreSQLContainer<?> postgresContainer() {
+        return postgres;
+    }
 }

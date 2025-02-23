@@ -1,5 +1,11 @@
 package com.geovannycode.ecommerce.payment.infrastructure.api;
 
+import static org.hamcrest.Matchers.is;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.geovannycode.ecommerce.payment.TestcontainersConfiguration;
 import com.geovannycode.ecommerce.payment.domain.model.enums.PaymentStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,25 +17,19 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
-import static org.hamcrest.Matchers.is;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import com.geovannycode.ecommerce.payment.TestcontainersConfiguration;
-
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
 @AutoConfigureMockMvc
 @Sql("/test-data.sql")
 public class PaymentControllerTest {
 
-
     @Autowired
     private MockMvc mockMvc;
 
     @Test
     void shouldAcceptPaymentSuccessfully() throws Exception {
-        String requestBody = """
+        String requestBody =
+                """
                 {
                     "cardNumber": "1111222233334444",
                     "cvv": "123",
@@ -47,7 +47,8 @@ public class PaymentControllerTest {
 
     @Test
     void shouldRejectPaymentWhenCVVIsIncorrect() throws Exception {
-        String requestBody = """
+        String requestBody =
+                """
                 {
                     "cardNumber": "1111222233334444",
                     "cvv": "111",
@@ -65,7 +66,8 @@ public class PaymentControllerTest {
 
     @Test
     void shouldFailWhenMandatoryDataIsMissing() throws Exception {
-        String requestBody = """
+        String requestBody =
+                """
                 {
                     "cardNumber": "1111222233334444",
                     "cvv": "111"
