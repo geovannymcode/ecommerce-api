@@ -8,8 +8,8 @@
 Project E-commerce Api with Spring Boot and Microservices
 
 - Catalog Service
-- Order Service
 - Payment Service
+- Order Service
 
 ---
 
