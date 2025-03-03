@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.infrastructure.output.clients;
+package com.geovannycode.ecommerce.order.infrastructure.output.clients.catalog;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

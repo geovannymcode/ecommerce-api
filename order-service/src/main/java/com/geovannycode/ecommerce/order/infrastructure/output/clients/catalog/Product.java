@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.infrastructure.output.clients;
+package com.geovannycode.ecommerce.order.infrastructure.output.clients.catalog;
 
 import java.math.BigDecimal;
 
