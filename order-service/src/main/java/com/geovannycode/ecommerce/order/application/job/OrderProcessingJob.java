@@ -9,6 +9,7 @@ import com.geovannycode.ecommerce.order.domain.model.Customer;
 import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderItemEntity;
+import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
