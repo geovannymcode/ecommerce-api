@@ -1,6 +1,6 @@
 package com.geovannycode.ecommerce.order.infrastructure.input.api.mapper;
 
-import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
+import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.CreateOrderRequest;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderDTO;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderItemDTO;

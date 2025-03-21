@@ -7,7 +7,7 @@ import com.geovannycode.ecommerce.order.domain.events.OrderCancelledEvent;
 import com.geovannycode.ecommerce.order.domain.events.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.domain.events.OrderDeliveredEvent;
 import com.geovannycode.ecommerce.order.domain.events.OrderErrorEvent;
-import com.geovannycode.ecommerce.order.domain.model.enums.OrderEventType;
+import com.geovannycode.ecommerce.order.common.model.enums.OrderEventType;
 import com.geovannycode.ecommerce.order.infrastructure.output.events.OrderEventPublisher;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEventEntity;
 import java.util.List;

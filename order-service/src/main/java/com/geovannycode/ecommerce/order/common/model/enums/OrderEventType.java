@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.domain.model.enums;
+package com.geovannycode.ecommerce.order.common.model.enums;
 
 public enum OrderEventType {
     ORDER_CREATED,

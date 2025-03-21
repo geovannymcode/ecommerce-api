@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.order.infrastructure.output.events;
+package com.geovannycode.ecommerce.order.common.kafka;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

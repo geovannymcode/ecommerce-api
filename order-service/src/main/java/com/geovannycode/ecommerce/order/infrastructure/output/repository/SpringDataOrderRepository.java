@@ -1,7 +1,7 @@
 package com.geovannycode.ecommerce.order.infrastructure.output.repository;
 
 import com.geovannycode.ecommerce.order.application.dto.OrderSummary;
-import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
+import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
 import java.util.List;
 import java.util.Optional;

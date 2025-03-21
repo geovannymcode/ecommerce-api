@@ -1,6 +1,6 @@
 package com.geovannycode.ecommerce.order.infrastructure.persistence.entity;
 
-import com.geovannycode.ecommerce.order.domain.model.enums.OrderEventType;
+import com.geovannycode.ecommerce.order.common.model.enums.OrderEventType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

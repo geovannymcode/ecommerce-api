@@ -1,8 +1,6 @@
 package com.geovannycode.ecommerce.order.infrastructure.persistence.entity;
 
-import com.geovannycode.ecommerce.order.domain.model.Address;
-import com.geovannycode.ecommerce.order.domain.model.Customer;
-import com.geovannycode.ecommerce.order.domain.model.enums.OrderStatus;
+import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.CascadeType;
