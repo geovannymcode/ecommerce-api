@@ -2,9 +2,11 @@ package com.geovannycode.ecommerce.order.application.job;
 
 import com.geovannycode.ecommerce.order.ApplicationProperties;
 import com.geovannycode.ecommerce.order.application.service.OrderService;
+import com.geovannycode.ecommerce.order.common.model.Address;
+import com.geovannycode.ecommerce.order.common.model.Customer;
+import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
+import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderItem;
-import com.geovannycode.ecommerce.order.domain.events.OrderCreatedEvent;
-import com.geovannycode.ecommerce.order.domain.events.OrderErrorEvent;
 import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.common.kafka.KafkaHelper;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;

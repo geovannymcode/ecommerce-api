@@ -7,7 +7,7 @@ import com.geovannycode.ecommerce.order.application.ports.input.FindUserOrderUse
 import com.geovannycode.ecommerce.order.application.ports.input.ProcessNewOrdersUseCase;
 import com.geovannycode.ecommerce.order.application.ports.output.OrderEventRepository;
 import com.geovannycode.ecommerce.order.application.ports.output.OrderRepository;
-import com.geovannycode.ecommerce.order.domain.events.OrderCreatedEvent;
+import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.CreateOrderRequest;
 import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.CreateOrderResponse;
