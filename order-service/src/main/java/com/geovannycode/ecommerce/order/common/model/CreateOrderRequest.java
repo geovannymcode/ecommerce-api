@@ -1,10 +1,11 @@
-package com.geovannycode.ecommerce.order.infrastructure.input.api.dto;
+package com.geovannycode.ecommerce.order.common.model;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+
 import java.util.Set;
 
 public record CreateOrderRequest(
-        @Valid @NotEmpty(message = "Items cannot be empty") Set<OrderItemDTO> items,
+        @Valid @NotEmpty(message = "Items cannot be empty") Set<OrderItem> items,
         @Valid Customer customer,
         @Valid Address deliveryAddress) {}

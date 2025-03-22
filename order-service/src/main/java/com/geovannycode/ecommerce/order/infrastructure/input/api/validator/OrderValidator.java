@@ -1,8 +1,8 @@
 package com.geovannycode.ecommerce.order.infrastructure.input.api.validator;
 
+import com.geovannycode.ecommerce.order.common.model.CreateOrderRequest;
+import com.geovannycode.ecommerce.order.common.model.OrderItem;
 import com.geovannycode.ecommerce.order.domain.exception.InvalidOrderException;
-import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.CreateOrderRequest;
-import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderItemDTO;
 import com.geovannycode.ecommerce.order.infrastructure.output.clients.catalog.Product;
 import com.geovannycode.ecommerce.order.infrastructure.output.clients.catalog.ProductServiceClient;
 import java.util.Set;
@@ -21,8 +21,8 @@ public class OrderValidator {
     }
 
     public void validate(CreateOrderRequest request) {
-        Set<OrderItemDTO> items = request.items();
-        for (OrderItemDTO item : items) {
+        Set<OrderItem> items = request.items();
+        for (OrderItem item : items) {
             Product product = client.getProductByCode(item.code())
                     .orElseThrow(() -> new InvalidOrderException("Invalid Product code:" + item.code()));
             if (item.price().compareTo(product.price()) != 0) {

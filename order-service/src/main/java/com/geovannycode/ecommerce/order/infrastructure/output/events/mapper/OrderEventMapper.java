@@ -1,10 +1,10 @@
 package com.geovannycode.ecommerce.order.infrastructure.output.events.mapper;
 
-import com.geovannycode.ecommerce.order.domain.events.OrderCancelledEvent;
-import com.geovannycode.ecommerce.order.domain.events.OrderCreatedEvent;
-import com.geovannycode.ecommerce.order.domain.events.OrderDeliveredEvent;
-import com.geovannycode.ecommerce.order.domain.events.OrderErrorEvent;
-import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderItemDTO;
+import com.geovannycode.ecommerce.order.common.model.OrderCancelledEvent;
+import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
+import com.geovannycode.ecommerce.order.common.model.OrderDeliveredEvent;
+import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
+import com.geovannycode.ecommerce.order.common.model.OrderItem;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -55,9 +55,9 @@ public class OrderEventMapper {
                 LocalDateTime.now());
     }
 
-    private static Set<OrderItemDTO> getOrderItems(OrderEntity order) {
+    private static Set<OrderItem> getOrderItems(OrderEntity order) {
         return order.getItems().stream()
-                .map(item -> new OrderItemDTO(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
+                .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                 .collect(Collectors.toSet());
     }
 }

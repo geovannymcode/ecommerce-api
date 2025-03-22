@@ -1,9 +1,9 @@
 package com.geovannycode.ecommerce.order.infrastructure.input.api.mapper;
 
+import com.geovannycode.ecommerce.order.common.model.CreateOrderRequest;
+import com.geovannycode.ecommerce.order.common.model.OrderDTO;
+import com.geovannycode.ecommerce.order.common.model.OrderItem;
 import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
-import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.CreateOrderRequest;
-import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderDTO;
-import com.geovannycode.ecommerce.order.infrastructure.input.api.dto.OrderItemDTO;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderItemEntity;
 import java.util.HashSet;
@@ -20,7 +20,7 @@ public class OrderMapper {
         newOrder.setCustomer(request.customer());
         newOrder.setDeliveryAddress(request.deliveryAddress());
         Set<OrderItemEntity> orderItems = new HashSet<>();
-        for (OrderItemDTO item : request.items()) {
+        for (OrderItem item : request.items()) {
             OrderItemEntity orderItem = new OrderItemEntity();
             orderItem.setCode(item.code());
             orderItem.setName(item.name());
@@ -34,8 +34,8 @@ public class OrderMapper {
     }
 
     public static OrderDTO convertToDTO(OrderEntity order) {
-        Set<OrderItemDTO> orderItems = order.getItems().stream()
-                .map(item -> new OrderItemDTO(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
+        Set<OrderItem> orderItems = order.getItems().stream()
+                .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                 .collect(Collectors.toSet());
 
         return new OrderDTO(
