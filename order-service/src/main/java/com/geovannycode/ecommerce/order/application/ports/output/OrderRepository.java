@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository {
-    List<OrderEntity> findByStatus(OrderStatus status);
+    List<OrderEntity> findOrderByStatus(OrderStatus status);
 
     Optional<OrderEntity> findByOrderNumber(String orderNumber);
 

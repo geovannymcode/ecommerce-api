@@ -1,17 +1,16 @@
 package com.geovannycode.ecommerce.order.infrastructure.output.clients.catalog;
 
 import com.geovannycode.ecommerce.order.ApplicationProperties;
+import java.time.Duration;
 import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
-import java.time.Duration;
-
-@Configuration
+@Configuration(value = "orderCatalogServiceClientConfig")
 class CatalogServiceClientConfig {
-    @Bean
+    @Bean(name = "orderRestClient")
     RestClient restClient(RestClient.Builder builder, ApplicationProperties properties) {
         ClientHttpRequestFactory requestFactory = ClientHttpRequestFactoryBuilder.simple()
                 .withCustomizer(customizer -> {

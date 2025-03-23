@@ -27,7 +27,7 @@ public class OrderEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_id_generator")
     @SequenceGenerator(name = "order_id_generator", sequenceName = "order_id_seq")
-    private Long id;
+    private Long orderId;
 
     @Column(nullable = false)
     private String orderNumber;
@@ -35,7 +35,7 @@ public class OrderEntity {
     @Column(name = "username", nullable = false)
     private String userName;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "order")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "orderEntity")
     private Set<OrderItemEntity> items;
 
     @Embedded
@@ -70,12 +70,12 @@ public class OrderEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Long getId() {
-        return id;
+    public Long getOrderId() {
+        return orderId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setOrderId(Long orderId) {
+        this.orderId = orderId;
     }
 
     public String getOrderNumber() {

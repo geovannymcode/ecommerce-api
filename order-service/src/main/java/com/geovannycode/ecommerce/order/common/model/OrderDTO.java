@@ -1,9 +1,7 @@
 package com.geovannycode.ecommerce.order.common.model;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;

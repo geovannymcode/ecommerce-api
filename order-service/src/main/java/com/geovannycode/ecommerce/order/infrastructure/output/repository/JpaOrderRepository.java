@@ -17,7 +17,7 @@ public class JpaOrderRepository implements OrderRepository {
     }
 
     @Override
-    public List<OrderEntity> findByStatus(OrderStatus status) {
+    public List<OrderEntity> findOrderByStatus(OrderStatus status) {
         return springDataOrderRepository.findByStatus(status);
     }
 

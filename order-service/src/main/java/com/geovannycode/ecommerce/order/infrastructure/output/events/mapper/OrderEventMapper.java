@@ -55,7 +55,7 @@ public class OrderEventMapper {
                 LocalDateTime.now());
     }
 
-    private static Set<OrderItem> getOrderItems(OrderEntity order) {
+    public static Set<OrderItem> getOrderItems(OrderEntity order) {
         return order.getItems().stream()
                 .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                 .collect(Collectors.toSet());

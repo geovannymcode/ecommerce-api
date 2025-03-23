@@ -6,11 +6,11 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class JpaCartRepository implements CartRepository {
+public class RedisCartRepository implements CartRepository {
 
     private final SpringDataCartRepository springDataCatRepository;
 
-    public JpaCartRepository(SpringDataCartRepository springDataCatRepository) {
+    public RedisCartRepository(SpringDataCartRepository springDataCatRepository) {
         this.springDataCatRepository = springDataCatRepository;
     }
 

@@ -1,21 +1,26 @@
 package com.geovannycode.ecommerce.order.infrastructure.output.events;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geovannycode.ecommerce.order.ApplicationProperties;
 import com.geovannycode.ecommerce.order.common.model.OrderCancelledEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderDeliveredEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 public class OrderEventPublisher {
-    private final RabbitTemplate rabbitTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ApplicationProperties properties;
+    private final ObjectMapper objectMapper;
 
-    OrderEventPublisher(RabbitTemplate rabbitTemplate, ApplicationProperties properties) {
-        this.rabbitTemplate = rabbitTemplate;
+    OrderEventPublisher(
+            KafkaTemplate<String, Object> kafkaTemplate, ApplicationProperties properties, ObjectMapper objectMapper) {
+        this.kafkaTemplate = kafkaTemplate;
         this.properties = properties;
+        this.objectMapper = objectMapper;
     }
 
     public void publish(OrderCreatedEvent event) {
@@ -34,7 +39,12 @@ public class OrderEventPublisher {
         this.send(properties.errorOrdersTopic(), event);
     }
 
-    private void send(String routingKey, Object payload) {
-        rabbitTemplate.convertAndSend(properties.orderEventsExchange(), routingKey, payload);
+    private void send(String topic, Object payload) {
+        try {
+            String jsonPayload = objectMapper.writeValueAsString(payload);
+            kafkaTemplate.send(topic, jsonPayload);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error serializing event", e);
+        }
     }
 }

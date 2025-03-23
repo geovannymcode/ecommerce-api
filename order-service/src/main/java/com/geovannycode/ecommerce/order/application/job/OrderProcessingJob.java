@@ -2,34 +2,39 @@ package com.geovannycode.ecommerce.order.application.job;
 
 import com.geovannycode.ecommerce.order.ApplicationProperties;
 import com.geovannycode.ecommerce.order.application.service.OrderService;
+import com.geovannycode.ecommerce.order.common.kafka.KafkaHelper;
 import com.geovannycode.ecommerce.order.common.model.Address;
 import com.geovannycode.ecommerce.order.common.model.Customer;
 import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderItem;
 import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
-import com.geovannycode.ecommerce.order.common.kafka.KafkaHelper;
+import com.geovannycode.ecommerce.order.infrastructure.output.events.OrderEventPublisher;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class OrderProcessingJob {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(OrderProcessingJob.class);
     private final OrderService orderService;
-    private final KafkaHelper kafkaHelper;
     private final ApplicationProperties properties;
+    private final OrderEventPublisher orderEventPublisher;
 
     public OrderProcessingJob(
-            OrderService orderService, KafkaHelper kafkaHelper, ApplicationProperties properties) {
+            OrderService orderService,
+            KafkaHelper kafkaHelper,
+            ApplicationProperties properties,
+            OrderEventPublisher orderEventPublisher) {
         this.orderService = orderService;
-        this.kafkaHelper = kafkaHelper;
         this.properties = properties;
+        this.orderEventPublisher = orderEventPublisher;
     }
 
     @Scheduled(fixedDelay = 60000)
@@ -37,9 +42,9 @@ public class OrderProcessingJob {
         List<OrderEntity> newOrders = orderService.findOrdersByStatus(OrderStatus.NEW);
         for (OrderEntity order : newOrders) {
             OrderCreatedEvent orderCreatedEvent = this.buildOrderCreatedEvent(order);
-            kafkaHelper.send(properties.newOrdersTopic(), orderCreatedEvent);
-            log.info("Published OrderCreatedEvent for orderId:{}", order.getOrderId());
-            orderService.updateOrderStatus(order.getOrderId(), OrderStatus.IN_PROCESS, null);
+            orderEventPublisher.publish(orderCreatedEvent);
+            log.info("Published OrderCreatedEvent for orderId:{}", order.getOrderNumber());
+            orderService.updateOrderStatus(order.getOrderNumber(), OrderStatus.IN_PROCESS, null);
         }
     }
 
@@ -48,52 +53,51 @@ public class OrderProcessingJob {
         List<OrderEntity> orders = orderService.findOrdersByStatus(OrderStatus.PAYMENT_REJECTED);
         for (OrderEntity order : orders) {
             OrderErrorEvent orderErrorEvent = this.buildOrderErrorEvent(order, "Payment rejected");
-            kafkaHelper.send(properties.errorOrdersTopic(), orderErrorEvent);
-            log.info("Published OrderErrorEvent for orderId:{}", order.getOrderId());
+            orderEventPublisher.publish(orderErrorEvent);
+            log.info("Published OrderErrorEvent for orderId:{}", order.getOrderNumber());
         }
     }
 
     private OrderCreatedEvent buildOrderCreatedEvent(OrderEntity order) {
         return new OrderCreatedEvent(
-                order.getOrderId(),
+                UUID.randomUUID().toString(),
+                order.getOrderNumber(),
                 getOrderItems(order),
                 getCustomer(order),
-                getDeliveryAddress(order));
+                getDeliveryAddress(order),
+                LocalDateTime.now());
     }
 
     private OrderErrorEvent buildOrderErrorEvent(OrderEntity order, String reason) {
         return new OrderErrorEvent(
-                order.getOrderId(),
-                reason,
+                UUID.randomUUID().toString(),
+                order.getOrderNumber(),
                 getOrderItems(order),
                 getCustomer(order),
-                getDeliveryAddress(order));
+                getDeliveryAddress(order),
+                reason,
+                LocalDateTime.now());
     }
 
     private Set<OrderItem> getOrderItems(OrderEntity order) {
         return order.getItems().stream()
-                .map(
-                        item ->
-                                new OrderItem(
-                                        item.getCode(),
-                                        item.getName(),
-                                        item.getPrice(),
-                                        item.getQuantity()))
+                .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                 .collect(Collectors.toSet());
     }
 
     private Customer getCustomer(OrderEntity order) {
-        return new Customer(
-                order.getCustomerName(), order.getCustomerEmail(), order.getCustomerPhone());
+        Customer entityCustomer = order.getCustomer();
+        return new Customer(entityCustomer.name(), entityCustomer.email(), entityCustomer.phone());
     }
 
     private Address getDeliveryAddress(OrderEntity order) {
+        Address entityAddress = order.getDeliveryAddress();
         return new Address(
-                order.getDeliveryAddressLine1(),
-                order.getDeliveryAddressLine2(),
-                order.getDeliveryAddressCity(),
-                order.getDeliveryAddressState(),
-                order.getDeliveryAddressZipCode(),
-                order.getDeliveryAddressCountry());
+                entityAddress.addressLine1(),
+                entityAddress.addressLine2(),
+                entityAddress.city(),
+                entityAddress.state(),
+                entityAddress.zipCode(),
+                entityAddress.country());
     }
 }

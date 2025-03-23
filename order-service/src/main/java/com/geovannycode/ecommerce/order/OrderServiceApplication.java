@@ -8,7 +8,7 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = "com.geovannycode.ecommerce")
-@EnableRedisRepositories(basePackages = "com.geovannycode.ecommerce.cart.infrastructure.adapter.persistence")
+@EnableRedisRepositories(basePackages = "com.geovannycode.ecommerce.cart.infrastructure.output.repository")
 @ConfigurationPropertiesScan
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "10m")
