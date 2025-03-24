@@ -1,8 +1,6 @@
 package com.geovannycode.ecommerce.order.application.job;
 
-import com.geovannycode.ecommerce.order.ApplicationProperties;
 import com.geovannycode.ecommerce.order.application.service.OrderService;
-import com.geovannycode.ecommerce.order.common.kafka.KafkaHelper;
 import com.geovannycode.ecommerce.order.common.model.Address;
 import com.geovannycode.ecommerce.order.common.model.Customer;
 import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
@@ -25,20 +23,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderProcessingJob {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(OrderProcessingJob.class);
     private final OrderService orderService;
-    private final ApplicationProperties properties;
     private final OrderEventPublisher orderEventPublisher;
 
-    public OrderProcessingJob(
-            OrderService orderService,
-            KafkaHelper kafkaHelper,
-            ApplicationProperties properties,
-            OrderEventPublisher orderEventPublisher) {
+    public OrderProcessingJob(OrderService orderService, OrderEventPublisher orderEventPublisher) {
         this.orderService = orderService;
-        this.properties = properties;
         this.orderEventPublisher = orderEventPublisher;
     }
 
     @Scheduled(fixedDelay = 60000)
+    @Transactional
     public void processNewOrders() {
         List<OrderEntity> newOrders = orderService.findOrdersByStatus(OrderStatus.NEW);
         for (OrderEntity order : newOrders) {

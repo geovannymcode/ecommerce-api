@@ -5,7 +5,6 @@ import com.geovannycode.ecommerce.order.application.ports.input.CreateOrderUseCa
 import com.geovannycode.ecommerce.order.application.ports.input.FindOrdersUseCase;
 import com.geovannycode.ecommerce.order.application.ports.input.FindUserOrderUseCase;
 import com.geovannycode.ecommerce.order.application.ports.input.ProcessNewOrdersUseCase;
-import com.geovannycode.ecommerce.order.application.ports.output.OrderEventRepository;
 import com.geovannycode.ecommerce.order.application.ports.output.OrderRepository;
 import com.geovannycode.ecommerce.order.common.model.CreateOrderRequest;
 import com.geovannycode.ecommerce.order.common.model.CreateOrderResponse;
@@ -84,11 +83,14 @@ public class OrderService
         OrderEntity savedOrder = this.orderRepository.save(newOrder);
         log.info("Created Order with orderNumber={}", savedOrder.getOrderNumber());
         try {
-        OrderCreatedEvent orderCreatedEvent = OrderEventMapper.buildOrderCreatedEvent(savedOrder);
-        orderEventService.save(orderCreatedEvent);
+            OrderCreatedEvent orderCreatedEvent = OrderEventMapper.buildOrderCreatedEvent(savedOrder);
+            orderEventService.save(orderCreatedEvent);
         } catch (Exception e) {
-            log.error("Failed to create order event for orderNumber={}: {}",
-                    savedOrder.getOrderNumber(), e.getMessage(), e);
+            log.error(
+                    "Failed to create order event for orderNumber={}: {}",
+                    savedOrder.getOrderNumber(),
+                    e.getMessage(),
+                    e);
             // No lanzamos la excepción para no afectar la creación de la orden
         }
         return new CreateOrderResponse(savedOrder.getOrderNumber());
@@ -182,7 +184,6 @@ public class OrderService
             log.error("Failed to save order cancelled event: {}", e.getMessage(), e);
         }
     }
-
 
     public void updateOrderStatus(String orderNumber, OrderStatus status, String comments) {
         OrderEntity order = orderRepository
