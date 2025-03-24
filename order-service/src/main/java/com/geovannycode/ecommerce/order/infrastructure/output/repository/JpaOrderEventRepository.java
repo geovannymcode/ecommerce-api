@@ -17,8 +17,8 @@ public class JpaOrderEventRepository implements OrderEventRepository {
     }
 
     @Override
-    public void save(OrderEventEntity orderEventEntity) {
-        springDataOrderEventRepository.save(orderEventEntity);
+    public void save(OrderEventEntity event) {
+        springDataOrderEventRepository.save(event);
     }
 
     @Override
@@ -27,8 +27,8 @@ public class JpaOrderEventRepository implements OrderEventRepository {
     }
 
     @Override
-    public void delete(OrderEventEntity orderEventEntity) {
-        springDataOrderEventRepository.delete(orderEventEntity);
+    public void delete(OrderEventEntity event) {
+        springDataOrderEventRepository.delete(event);
     }
 
     @Override

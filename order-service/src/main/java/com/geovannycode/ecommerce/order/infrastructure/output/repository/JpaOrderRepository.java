@@ -46,6 +46,6 @@ public class JpaOrderRepository implements OrderRepository {
 
     @Override
     public OrderEntity save(OrderEntity orderEntity) {
-        return null;
+        return springDataOrderRepository.save(orderEntity);
     }
 }

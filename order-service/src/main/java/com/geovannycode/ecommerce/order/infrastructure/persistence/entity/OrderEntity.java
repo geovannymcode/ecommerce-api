@@ -27,7 +27,7 @@ public class OrderEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_id_generator")
     @SequenceGenerator(name = "order_id_generator", sequenceName = "order_id_seq")
-    private Long orderId;
+    private Long id;
 
     @Column(nullable = false)
     private String orderNumber;
@@ -70,12 +70,12 @@ public class OrderEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public Long getOrderId() {
-        return orderId;
+    public Long getId() {
+        return id;
     }
 
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
+    public void setId(Long orderId) {
+        this.id = id;
     }
 
     public String getOrderNumber() {

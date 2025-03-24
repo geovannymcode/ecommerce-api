@@ -44,7 +44,6 @@ public class OrderService
     public OrderService(
             OrderRepository orderRepository,
             OrderValidator orderValidator,
-            OrderEventRepository orderEventRepository,
             OrderEventService orderEventService,
             PaymentServiceClient paymentServiceClient) {
         this.orderRepository = orderRepository;
@@ -58,6 +57,10 @@ public class OrderService
         orderValidator.validate(request);
         OrderEntity newOrder = OrderMapper.convertToEntity(request);
         newOrder.setUserName(userName);
+
+        if (newOrder.getStatus() == null) {
+            newOrder.setStatus(OrderStatus.NEW);
+        }
 
         if (request.payment() != null) {
             CreateOrderRequest.Payment payment = request.payment();
@@ -80,8 +83,14 @@ public class OrderService
 
         OrderEntity savedOrder = this.orderRepository.save(newOrder);
         log.info("Created Order with orderNumber={}", savedOrder.getOrderNumber());
+        try {
         OrderCreatedEvent orderCreatedEvent = OrderEventMapper.buildOrderCreatedEvent(savedOrder);
         orderEventService.save(orderCreatedEvent);
+        } catch (Exception e) {
+            log.error("Failed to create order event for orderNumber={}: {}",
+                    savedOrder.getOrderNumber(), e.getMessage(), e);
+            // No lanzamos la excepción para no afectar la creación de la orden
+        }
         return new CreateOrderResponse(savedOrder.getOrderNumber());
     }
 
@@ -111,18 +120,32 @@ public class OrderService
             if (canBeDelivered(order)) {
                 log.info("OrderNumber: {} can be delivered", order.getOrderNumber());
                 orderRepository.updateOrderStatus(order.getOrderNumber(), OrderStatus.DELIVERED);
-                orderEventService.save(OrderEventMapper.buildOrderDeliveredEvent(order));
-
+                try {
+                    orderEventService.save(OrderEventMapper.buildOrderDeliveredEvent(order));
+                    log.info("Order delivered event saved for orderNumber={}", order.getOrderNumber());
+                } catch (Exception e) {
+                    log.error("Failed to save order delivered event: {}", e.getMessage(), e);
+                }
             } else {
                 log.info("OrderNumber: {} can not be delivered", order.getOrderNumber());
                 orderRepository.updateOrderStatus(order.getOrderNumber(), OrderStatus.CANCELLED);
-                orderEventService.save(
-                        OrderEventMapper.buildOrderCancelledEvent(order, "Can't deliver to the location"));
+                try {
+                    orderEventService.save(
+                            OrderEventMapper.buildOrderCancelledEvent(order, "Can't deliver to the location"));
+                    log.info("Order cancelled event saved for orderNumber={}", order.getOrderNumber());
+                } catch (Exception e) {
+                    log.error("Failed to save order cancelled event: {}", e.getMessage(), e);
+                }
             }
         } catch (RuntimeException e) {
             log.error("Failed to process Order with orderNumber: {}", order.getOrderNumber(), e);
             orderRepository.updateOrderStatus(order.getOrderNumber(), OrderStatus.ERROR);
-            orderEventService.save(OrderEventMapper.buildOrderErrorEvent(order, e.getMessage()));
+            try {
+                orderEventService.save(OrderEventMapper.buildOrderErrorEvent(order, e.getMessage()));
+                log.info("Order error event saved for orderNumber={}", order.getOrderNumber());
+            } catch (Exception ex) {
+                log.error("Failed to save order error event: {}", ex.getMessage(), ex);
+            }
         }
     }
 
@@ -152,8 +175,14 @@ public class OrderService
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
-        orderEventService.save(OrderEventMapper.buildOrderCancelledEvent(order, "Order cancelled by user"));
+        try {
+            orderEventService.save(OrderEventMapper.buildOrderCancelledEvent(order, "Order cancelled by user"));
+            log.info("Order cancelled event saved for orderNumber={}", order.getOrderNumber());
+        } catch (Exception e) {
+            log.error("Failed to save order cancelled event: {}", e.getMessage(), e);
+        }
     }
+
 
     public void updateOrderStatus(String orderNumber, OrderStatus status, String comments) {
         OrderEntity order = orderRepository
@@ -161,16 +190,25 @@ public class OrderService
                 .orElseThrow(() -> new OrderNotFoundException(orderNumber));
 
         order.setStatus(status);
-        order.setComments(comments);
+        if (comments != null) {
+            order.setComments(comments);
+        }
         orderRepository.save(order);
 
-        // Crear eventos para estados específicos que son soportados por OrderEventService
-        if (status == OrderStatus.DELIVERED) {
-            orderEventService.save(OrderEventMapper.buildOrderDeliveredEvent(order));
-        } else if (status == OrderStatus.CANCELLED) {
-            orderEventService.save(OrderEventMapper.buildOrderCancelledEvent(order, comments));
-        } else if (status == OrderStatus.ERROR) {
-            orderEventService.save(OrderEventMapper.buildOrderErrorEvent(order, comments));
+        try {
+            // Crear eventos para estados específicos que son soportados por OrderEventService
+            if (status == OrderStatus.DELIVERED) {
+                orderEventService.save(OrderEventMapper.buildOrderDeliveredEvent(order));
+                log.info("Order delivered event saved for orderNumber={}", order.getOrderNumber());
+            } else if (status == OrderStatus.CANCELLED) {
+                orderEventService.save(OrderEventMapper.buildOrderCancelledEvent(order, comments));
+                log.info("Order cancelled event saved for orderNumber={}", order.getOrderNumber());
+            } else if (status == OrderStatus.ERROR) {
+                orderEventService.save(OrderEventMapper.buildOrderErrorEvent(order, comments));
+                log.info("Order error event saved for orderNumber={}", order.getOrderNumber());
+            }
+        } catch (Exception e) {
+            log.error("Failed to save order status update event: {}", e.getMessage(), e);
         }
     }
 }
