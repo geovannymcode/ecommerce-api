@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:45432/postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    open-in-view: false
+    show-sql: true
+  mail:
+    host: ${MAIL_HOST:127.0.0.1}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:PLACEHOLDER}
+    password: ${MAIL_PASSWORD:PLACEHOLDER}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8083
+  shutdown: graceful
+
+# Configuración para Kafka
+notification:
+  order-created-topic: order-created
+  order-delivered-topic: order-delivered
+  order-cancelled-topic: order-cancelled
+  order-error-topic: order-error
+  support-email: support@yourdomain.com
+
+management:
+  info:
+    git:
+      mode: full
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    enabled: false
+    sampling:
+      probability: 1.0

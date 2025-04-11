@@ -6,6 +6,7 @@ import com.geovannycode.ecommerce.notification.domain.model.OrderDeliveredEvent;
 import com.geovannycode.ecommerce.notification.domain.model.OrderErrorEvent;
 import com.geovannycode.ecommerce.notification.domain.port.input.NotificationUseCase;
 import com.geovannycode.ecommerce.notification.domain.port.output.EmailSenderPort;
+import com.geovannycode.ecommerce.notification.infrastructure.config.ApplicationProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,11 @@ public class NotificationService implements NotificationUseCase {
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private final EmailSenderPort emailSender;
-    private final String supportEmail;
+    private final ApplicationProperties properties;
 
-    public NotificationService(EmailSenderPort emailSender, String supportEmail) {
+    public NotificationService(EmailSenderPort emailSender, ApplicationProperties properties) {
         this.emailSender = emailSender;
-        this.supportEmail = supportEmail;
+        this.properties = properties;
     }
 
     @Override
@@ -75,7 +76,7 @@ public class NotificationService implements NotificationUseCase {
                 BookStore Team
                 ===================================================
                 """
-                        .formatted(event.customer().name(), event.orderNumber());
+                        .formatted(event.customer().name(), event.orderNumber(), event.reason());
         log.info("\n{}", message);
         emailSender.sendEmail(event.customer().email(), "Order Cancelled Notification", message);
     }
@@ -95,8 +96,8 @@ public class NotificationService implements NotificationUseCase {
                 BookStore Team
                 ===================================================
                 """
-                        .formatted(supportEmail, event.orderNumber(), event.reason());
+                        .formatted(properties.getSupportEmail(), event.orderNumber(), event.reason());
         log.info("\n{}", message);
-        emailSender.sendEmail(supportEmail, "Order Processing Failure Notification", message);
+        emailSender.sendEmail(properties.getSupportEmail(), "Order Processing Failure Notification", message);
     }
 }
