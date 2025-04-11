@@ -1,4 +1,4 @@
-package com.geovannycode.ecommerce.catalog.application.ports.output;
+package com.geovannycode.ecommerce.catalog.domain.port.output;
 
 import com.geovannycode.ecommerce.catalog.domain.model.Product;
 import java.util.Optional;

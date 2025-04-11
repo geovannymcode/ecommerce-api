@@ -5,7 +5,7 @@ import com.geovannycode.ecommerce.catalog.application.ports.input.DeleteProductU
 import com.geovannycode.ecommerce.catalog.application.ports.input.GetProductByCodeUseCase;
 import com.geovannycode.ecommerce.catalog.application.ports.input.GetProductsUseCase;
 import com.geovannycode.ecommerce.catalog.application.ports.input.SearchProductsUseCase;
-import com.geovannycode.ecommerce.catalog.application.ports.output.ProductRepository;
+import com.geovannycode.ecommerce.catalog.domain.port.output.ProductRepository;
 import com.geovannycode.ecommerce.catalog.domain.exception.ProductAlreadyExistsException;
 import com.geovannycode.ecommerce.catalog.domain.exception.ProductNotFoundException;
 import com.geovannycode.ecommerce.catalog.domain.model.PagedResult;
