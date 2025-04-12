@@ -35,4 +35,9 @@ public class JpaOrderEventRepository implements OrderEventRepository {
     public Optional<OrderEventEntity> findById(Long id) {
         return springDataOrderEventRepository.findById(id);
     }
+
+    @Override
+    public boolean existsByEventId(String eventId) {
+        return springDataOrderEventRepository.existsByEventId(eventId);
+    }
 }

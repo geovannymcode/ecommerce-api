@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geovannycode.ecommerce.order.application.ports.output.EventPublisherPort;
 import com.geovannycode.ecommerce.order.application.ports.output.OrderEventRepository;
+import com.geovannycode.ecommerce.order.application.ports.output.OrderRepository;
 import com.geovannycode.ecommerce.order.common.model.OrderCancelledEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderDeliveredEvent;
@@ -26,17 +27,36 @@ public class OrderEventService {
     private final OrderEventRepository orderEventRepository;
     private final EventPublisherPort eventPublisher;
     private final ObjectMapper objectMapper;
+    private final OrderRepository orderRepository;
 
     public OrderEventService(
-            OrderEventRepository orderEventRepository, EventPublisherPort eventPublisher, ObjectMapper objectMapper) {
+            OrderEventRepository orderEventRepository,
+            EventPublisherPort eventPublisher,
+            ObjectMapper objectMapper,
+            OrderRepository orderRepository) {
         this.orderEventRepository = orderEventRepository;
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
+        this.orderRepository = orderRepository;
     }
 
     public void save(OrderCreatedEvent event) {
         try {
             log.info("Saving OrderCreatedEvent with ID: {} for order: {}", event.getEventId(), event.getOrderNumber());
+            boolean eventExists = orderEventRepository.existsByEventId(event.getEventId());
+
+            if (eventExists) {
+                log.info("Event with ID {} already exists, skipping", event.getEventId());
+                return;
+            }
+
+            boolean orderExists = orderRepository.existsByOrderNumber(event.getOrderNumber());
+            if (!orderExists) {
+                log.warn(
+                        "Cannot save OrderCreatedEvent: Order with number {} does not exist in the database",
+                        event.getOrderNumber());
+                return;
+            }
 
             OrderEventEntity orderEvent = new OrderEventEntity();
             orderEvent.setEventId(event.getEventId());
@@ -45,10 +65,11 @@ public class OrderEventService {
             orderEvent.setCreatedAt(event.getCreatedAt());
             orderEvent.setPayload(toJsonPayload(event));
 
-            log.debug("Payload generado: {}", orderEvent.getPayload());
+            log.info("Order exists check for orderNumber {}: {}", event.getOrderNumber(), orderExists);
+
             this.orderEventRepository.save(orderEvent);
-            log.debug("Evento completo antes de guardar: {}", orderEvent);
             log.info("Successfully saved OrderEventEntity with ID: {}", orderEvent.getEventId());
+
         } catch (Exception e) {
             log.error("Error saving OrderCreatedEvent: {}", e.getMessage(), e);
             throw e;
@@ -83,16 +104,6 @@ public class OrderEventService {
         orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
         this.orderEventRepository.save(orderEvent);
-    }
-
-    public void publishOrderEvents() {
-        Sort sort = Sort.by("createdAt").ascending();
-        List<OrderEventEntity> events = orderEventRepository.findAll(sort);
-        log.info("Found {} Order Events to be published", events.size());
-        for (OrderEventEntity event : events) {
-            this.publishEvent(event);
-            orderEventRepository.delete(event);
-        }
     }
 
     private void publishEvent(OrderEventEntity event) {
@@ -157,7 +168,7 @@ public class OrderEventService {
                 this.publishEvent(event);
 
                 log.info("Successfully published event: {}", event.getEventId());
-                orderEventRepository.delete(event);
+                // orderEventRepository.delete(event);
             } catch (Exception e) {
                 log.error("Error publishing event {}: {}", event.getEventId(), e.getMessage(), e);
             }

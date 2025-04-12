@@ -18,4 +18,6 @@ public interface OrderRepository {
     Optional<OrderEntity> findByUserNameAndOrderNumber(String userName, String orderNumber);
 
     OrderEntity save(OrderEntity orderEntity);
+
+    boolean existsByOrderNumber(String orderNumber);
 }

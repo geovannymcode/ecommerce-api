@@ -48,4 +48,9 @@ public class JpaOrderRepository implements OrderRepository {
     public OrderEntity save(OrderEntity orderEntity) {
         return springDataOrderRepository.save(orderEntity);
     }
+
+    @Override
+    public boolean existsByOrderNumber(String orderNumber) {
+        return springDataOrderRepository.existsByOrderNumber(orderNumber);
+    }
 }

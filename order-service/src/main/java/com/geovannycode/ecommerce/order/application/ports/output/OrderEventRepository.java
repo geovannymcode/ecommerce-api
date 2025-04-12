@@ -13,4 +13,6 @@ public interface OrderEventRepository {
     void delete(OrderEventEntity orderEventEntity);
 
     Optional<OrderEventEntity> findById(Long id);
+
+    boolean existsByEventId(String eventId);
 }

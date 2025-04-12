@@ -14,6 +14,15 @@ import java.util.stream.Collectors;
 public class OrderEventMapper {
 
     public static OrderCreatedEvent buildOrderCreatedEvent(OrderEntity order) {
+        if (order.getOrderNumber() == null) throw new IllegalArgumentException("orderNumber is null");
+
+        if (order.getCustomer() == null) throw new IllegalArgumentException("customer is null");
+
+        if (order.getDeliveryAddress() == null) throw new IllegalArgumentException("deliveryAddress is null");
+
+        if (order.getItems() == null || order.getItems().isEmpty())
+            throw new IllegalArgumentException("items are missing");
+
         return new OrderCreatedEvent(
                 UUID.randomUUID().toString(),
                 order.getOrderNumber(),

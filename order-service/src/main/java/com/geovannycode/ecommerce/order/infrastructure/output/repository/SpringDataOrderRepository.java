@@ -28,4 +28,6 @@ public interface SpringDataOrderRepository extends JpaRepository<OrderEntity, Lo
         where o.userName = :userName and o.orderNumber = :orderNumber
         """)
     Optional<OrderEntity> findByUserNameAndOrderNumber(String userName, String orderNumber);
+
+    boolean existsByOrderNumber(String orderNumber);
 }

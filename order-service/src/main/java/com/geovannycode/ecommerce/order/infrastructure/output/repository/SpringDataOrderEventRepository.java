@@ -4,6 +4,5 @@ import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderE
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SpringDataOrderEventRepository extends JpaRepository<OrderEventEntity, Long> {
-
     boolean existsByEventId(String eventId);
 }
