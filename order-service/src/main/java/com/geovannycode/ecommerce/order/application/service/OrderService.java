@@ -153,7 +153,7 @@ public class OrderService
 
     private boolean canBeDelivered(OrderEntity order) {
         return DELIVERY_ALLOWED_COUNTRIES.contains(
-                order.getDeliveryAddress().country().toUpperCase());
+                order.getDeliveryAddress().getCountry().toUpperCase());
     }
 
     public Optional<OrderDTO> findOrderByOrderId(String orderNumber) {

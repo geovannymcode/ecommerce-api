@@ -14,6 +14,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,40 +38,40 @@ public class OrderEventService {
 
     public void save(OrderCreatedEvent event) {
         OrderEventEntity orderEvent = new OrderEventEntity();
-        orderEvent.setEventId(event.eventId());
+        orderEvent.setEventId(event.getEventId());
         orderEvent.setEventType(OrderEventType.ORDER_CREATED);
-        orderEvent.setOrderNumber(event.orderNumber());
-        orderEvent.setCreatedAt(event.createdAt());
+        orderEvent.setOrderNumber(event.getOrderNumber());
+        orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
         this.orderEventRepository.save(orderEvent);
     }
 
     public void save(OrderDeliveredEvent event) {
         OrderEventEntity orderEvent = new OrderEventEntity();
-        orderEvent.setEventId(event.eventId());
+        orderEvent.setEventId(event.getEventId());
         orderEvent.setEventType(OrderEventType.ORDER_DELIVERED);
-        orderEvent.setOrderNumber(event.orderNumber());
-        orderEvent.setCreatedAt(event.createdAt());
+        orderEvent.setOrderNumber(event.getOrderNumber());
+        orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
         this.orderEventRepository.save(orderEvent);
     }
 
     public void save(OrderCancelledEvent event) {
         OrderEventEntity orderEvent = new OrderEventEntity();
-        orderEvent.setEventId(event.eventId());
+        orderEvent.setEventId(event.getEventId());
         orderEvent.setEventType(OrderEventType.ORDER_CANCELLED);
-        orderEvent.setOrderNumber(event.orderNumber());
-        orderEvent.setCreatedAt(event.createdAt());
+        orderEvent.setOrderNumber(event.getOrderNumber());
+        orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
         this.orderEventRepository.save(orderEvent);
     }
 
     public void save(OrderErrorEvent event) {
         OrderEventEntity orderEvent = new OrderEventEntity();
-        orderEvent.setEventId(event.eventId());
+        orderEvent.setEventId(event.getEventId());
         orderEvent.setEventType(OrderEventType.ORDER_PROCESSING_FAILED);
-        orderEvent.setOrderNumber(event.orderNumber());
-        orderEvent.setCreatedAt(event.createdAt());
+        orderEvent.setOrderNumber(event.getOrderNumber());
+        orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
         this.orderEventRepository.save(orderEvent);
     }
@@ -125,5 +126,11 @@ public class OrderEventService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Scheduled(fixedDelay = 30000)
+    @Transactional
+    public void schedulePublishOrderEvents() {
+        this.publishOrderEvents();
     }
 }

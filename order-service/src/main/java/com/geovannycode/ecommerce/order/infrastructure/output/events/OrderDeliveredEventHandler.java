@@ -25,11 +25,11 @@ public class OrderDeliveredEventHandler {
     public void handle(String payload) {
         try {
             OrderDeliveredEvent event = objectMapper.readValue(payload, OrderDeliveredEvent.class);
-            log.info("Received a OrderDeliveredEvent with orderId:{}: ", event.orderNumber());
+            log.info("Received a OrderDeliveredEvent with orderId:{}: ", event.getOrderNumber());
             OrderDTO order =
-                    orderService.findOrderByOrderId(event.orderNumber()).orElse(null);
+                    orderService.findOrderByOrderId(event.getOrderNumber()).orElse(null);
             if (order == null) {
-                log.info("Received invalid OrderDeliveredEvent with orderId:{}: ", event.orderNumber());
+                log.info("Received invalid OrderDeliveredEvent with orderId:{}: ", event.getOrderNumber());
                 return;
             }
             orderService.updateOrderStatus(order.orderNumber(), OrderStatus.DELIVERED, null);

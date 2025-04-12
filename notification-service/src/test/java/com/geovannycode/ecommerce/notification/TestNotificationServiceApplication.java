@@ -1,4 +1,4 @@
-package com.geovannycode.notificationservice;
+package com.geovannycode.ecommerce.notification;
 
 import org.springframework.boot.SpringApplication;
 

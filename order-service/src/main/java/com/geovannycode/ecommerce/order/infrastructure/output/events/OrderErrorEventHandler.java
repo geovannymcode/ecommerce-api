@@ -25,14 +25,14 @@ public class OrderErrorEventHandler {
     public void handle(String payload) {
         try {
             OrderErrorEvent event = objectMapper.readValue(payload, OrderErrorEvent.class);
-            log.info("Received a OrderErrorEvent with orderId:{}", event.orderNumber());
+            log.info("Received a OrderErrorEvent with orderId:{}", event.getOrderNumber());
             OrderDTO order =
-                    orderService.findOrderByOrderId(event.orderNumber()).orElse(null);
+                    orderService.findOrderByOrderId(event.getOrderNumber()).orElse(null);
             if (order == null) {
-                log.info("Received invalid OrderErrorEvent with orderId:{}", event.orderNumber());
+                log.info("Received invalid OrderErrorEvent with orderId:{}", event.getOrderNumber());
                 return;
             }
-            orderService.updateOrderStatus(event.orderNumber(), OrderStatus.ERROR, event.reason());
+            orderService.updateOrderStatus(event.getOrderNumber(), OrderStatus.ERROR, event.getReason());
         } catch (JsonProcessingException e) {
             log.error("Error processing OrderErrorEvent. Payload: {}", payload);
             log.error(e.getMessage(), e);

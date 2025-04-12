@@ -19,6 +19,17 @@ spring:
           auth: true
           starttls:
             enable: true
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.geovannycode.ecommerce.notification.domain.model,com.geovannycode.ecommerce.order.common.model
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: java.lang.String
 
 server:
   port: 8084
@@ -26,11 +37,11 @@ server:
 
 # Configuraci�n para Kafka
 notification:
-  order-created-topic: order-created
-  order-delivered-topic: order-delivered
-  order-cancelled-topic: order-cancelled
-  order-error-topic: order-error
-  support-email: support@yourdomain.com
+  order-created-topic: new-orders-topic
+  order-delivered-topic: delivered-orders-topic
+  order-cancelled-topic: cancelled-orders-topic
+  order-error-topic: error-orders-topic
+  support-email: geovanny0401@gmail.com
 
 management:
   info:

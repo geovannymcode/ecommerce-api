@@ -37,9 +37,9 @@ public class NotificationService implements NotificationUseCase {
                 BookStore Team
                 ===================================================
                 """
-                        .formatted(event.customer().name(), event.orderNumber());
+                        .formatted(event.getCustomer().getName(), event.getOrderNumber());
         log.info("\n{}", message);
-        emailSender.sendEmail(event.customer().email(), "Order Created Notification", message);
+        emailSender.sendEmail(event.getCustomer().getEmail(), "Order Created Notification", message);
     }
 
     @Override
@@ -56,9 +56,9 @@ public class NotificationService implements NotificationUseCase {
                 BookStore Team
                 ===================================================
                 """
-                        .formatted(event.customer().name(), event.orderNumber());
+                        .formatted(event.getCustomer().getName(), event.getOrderNumber());
         log.info("\n{}", message);
-        emailSender.sendEmail(event.customer().email(), "Order Delivered Notification", message);
+        emailSender.sendEmail(event.getCustomer().getEmail(), "Order Delivered Notification", message);
     }
 
     @Override
@@ -76,9 +76,9 @@ public class NotificationService implements NotificationUseCase {
                 BookStore Team
                 ===================================================
                 """
-                        .formatted(event.customer().name(), event.orderNumber(), event.reason());
+                        .formatted(event.getCustomer().getName(), event.getOrderNumber());
         log.info("\n{}", message);
-        emailSender.sendEmail(event.customer().email(), "Order Cancelled Notification", message);
+        emailSender.sendEmail(event.getCustomer().getEmail(), "Order Cancelled Notification", message);
     }
 
     @Override
@@ -96,8 +96,8 @@ public class NotificationService implements NotificationUseCase {
                 BookStore Team
                 ===================================================
                 """
-                        .formatted(properties.getSupportEmail(), event.orderNumber(), event.reason());
+                        .formatted(event.getCustomer().getName(), event.getOrderNumber());
         log.info("\n{}", message);
-        emailSender.sendEmail(properties.getSupportEmail(), "Order Processing Failure Notification", message);
+        emailSender.sendEmail(event.getCustomer().getEmail(), "Order Processing Failure Notification", message);
     }
 }

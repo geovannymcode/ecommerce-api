@@ -1,4 +1,4 @@
-package com.geovannycode.notificationservice;
+package com.geovannycode.ecommerce.notification;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

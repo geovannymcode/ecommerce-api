@@ -82,17 +82,17 @@ public class OrderProcessingJob {
 
     private Customer getCustomer(OrderEntity order) {
         Customer entityCustomer = order.getCustomer();
-        return new Customer(entityCustomer.name(), entityCustomer.email(), entityCustomer.phone());
+        return new Customer(entityCustomer.getName(), entityCustomer.getEmail(), entityCustomer.getPhone());
     }
 
     private Address getDeliveryAddress(OrderEntity order) {
         Address entityAddress = order.getDeliveryAddress();
         return new Address(
-                entityAddress.addressLine1(),
-                entityAddress.addressLine2(),
-                entityAddress.city(),
-                entityAddress.state(),
-                entityAddress.zipCode(),
-                entityAddress.country());
+                entityAddress.getAddressLine1(),
+                entityAddress.getAddressLine2(),
+                entityAddress.getCity(),
+                entityAddress.getState(),
+                entityAddress.getZipCode(),
+                entityAddress.getCountry());
     }
 }
