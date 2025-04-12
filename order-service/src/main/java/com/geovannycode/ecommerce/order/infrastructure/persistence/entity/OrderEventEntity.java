@@ -97,14 +97,13 @@ public class OrderEventEntity {
 
     @Override
     public String toString() {
-        return "OrderEventEntity{" +
-                "id=" + id +
-                ", eventId='" + eventId + '\'' +
-                ", orderNumber='" + orderNumber + '\'' +
-                ", eventType=" + eventType +
-                ", payload='" + payload + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+        return "OrderEventEntity{" + "id="
+                + id + ", eventId='"
+                + eventId + '\'' + ", orderNumber='"
+                + orderNumber + '\'' + ", eventType="
+                + eventType + ", payload='"
+                + payload + '\'' + ", createdAt="
+                + createdAt + ", updatedAt="
+                + updatedAt + '}';
     }
 }

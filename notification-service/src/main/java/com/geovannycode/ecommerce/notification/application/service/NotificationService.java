@@ -32,8 +32,11 @@ public class NotificationService implements NotificationUseCase {
         }
 
         // Verificar si el email es nulo
-        if (event.getCustomer().getEmail() == null || event.getCustomer().getEmail().isEmpty()) {
-            log.error("Cannot send notification: Customer email is null or empty for orderNumber: {}", event.getOrderNumber());
+        if (event.getCustomer().getEmail() == null
+                || event.getCustomer().getEmail().isEmpty()) {
+            log.error(
+                    "Cannot send notification: Customer email is null or empty for orderNumber: {}",
+                    event.getOrderNumber());
             return;
         }
         String message =

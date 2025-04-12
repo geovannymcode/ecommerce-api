@@ -9,17 +9,15 @@ import com.geovannycode.ecommerce.notification.domain.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.notification.domain.model.OrderDeliveredEvent;
 import com.geovannycode.ecommerce.notification.domain.model.OrderErrorEvent;
 import com.geovannycode.ecommerce.notification.domain.model.OrderItem;
+import com.geovannycode.ecommerce.notification.infrastructure.config.ApplicationProperties;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
-import com.geovannycode.ecommerce.notification.infrastructure.config.ApplicationProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 @Component
 public class KafkaEventMapper {
@@ -42,9 +40,7 @@ public class KafkaEventMapper {
             // Eliminar las comillas externas
             message = message.substring(1, message.length() - 1);
             // Desescapar el JSON interno
-            message = message.replace("\\\"", "\"")
-                    .replace("\\\\", "\\")
-                    .replace("\\/", "/");
+            message = message.replace("\\\"", "\"").replace("\\\\", "\\").replace("\\/", "/");
             log.info("Unescaped message: {}", message);
         }
 
@@ -74,8 +70,7 @@ public class KafkaEventMapper {
                 eventData.items,
                 eventData.customer,
                 eventData.address,
-                eventData.createdAt
-        );
+                eventData.createdAt);
     }
 
     public OrderDeliveredEvent mapToOrderDeliveredEvent(String message) throws Exception {

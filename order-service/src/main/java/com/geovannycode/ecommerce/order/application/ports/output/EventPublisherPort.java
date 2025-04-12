@@ -7,7 +7,10 @@ import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
 
 public interface EventPublisherPort {
     void publish(OrderCreatedEvent event);
+
     void publish(OrderDeliveredEvent event);
+
     void publish(OrderCancelledEvent event);
+
     void publish(OrderErrorEvent event);
 }

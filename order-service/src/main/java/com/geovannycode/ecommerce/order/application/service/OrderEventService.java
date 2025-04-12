@@ -28,9 +28,7 @@ public class OrderEventService {
     private final ObjectMapper objectMapper;
 
     public OrderEventService(
-            OrderEventRepository orderEventRepository,
-            EventPublisherPort eventPublisher,
-            ObjectMapper objectMapper) {
+            OrderEventRepository orderEventRepository, EventPublisherPort eventPublisher, ObjectMapper objectMapper) {
         this.orderEventRepository = orderEventRepository;
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
@@ -38,8 +36,7 @@ public class OrderEventService {
 
     public void save(OrderCreatedEvent event) {
         try {
-            log.info("Saving OrderCreatedEvent with ID: {} for order: {}",
-                    event.getEventId(), event.getOrderNumber());
+            log.info("Saving OrderCreatedEvent with ID: {} for order: {}", event.getEventId(), event.getOrderNumber());
 
             OrderEventEntity orderEvent = new OrderEventEntity();
             orderEvent.setEventId(event.getEventId());
@@ -151,8 +148,11 @@ public class OrderEventService {
 
         for (OrderEventEntity event : events) {
             try {
-                log.info("Publishing event: type={}, orderNumber={}, eventId={}",
-                        event.getEventType(), event.getOrderNumber(), event.getEventId());
+                log.info(
+                        "Publishing event: type={}, orderNumber={}, eventId={}",
+                        event.getEventType(),
+                        event.getOrderNumber(),
+                        event.getEventId());
 
                 this.publishEvent(event);
 
@@ -160,7 +160,6 @@ public class OrderEventService {
                 orderEventRepository.delete(event);
             } catch (Exception e) {
                 log.error("Error publishing event {}: {}", event.getEventId(), e.getMessage(), e);
-
             }
         }
 
