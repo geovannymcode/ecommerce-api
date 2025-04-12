@@ -14,22 +14,58 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
+import com.geovannycode.ecommerce.notification.infrastructure.config.ApplicationProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class KafkaEventMapper {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaEventMapper.class);
     private final ObjectMapper objectMapper;
+    private final String supportEmail;
 
-    public KafkaEventMapper(ObjectMapper objectMapper) {
+    public KafkaEventMapper(ObjectMapper objectMapper, ApplicationProperties properties) {
         this.objectMapper = objectMapper;
+        this.supportEmail = properties.getSupportEmail();
     }
 
     public OrderCreatedEvent mapToOrderCreatedEvent(String message) throws Exception {
-        JsonNode root = parseMessage(message);
+
+        log.info("Starting to map message of length: {}", message.length());
+
+        // Si el mensaje está entre comillas y contiene caracteres escapados, eliminamos las comillas
+        if (message.startsWith("\"") && message.endsWith("\"")) {
+            // Eliminar las comillas externas
+            message = message.substring(1, message.length() - 1);
+            // Desescapar el JSON interno
+            message = message.replace("\\\"", "\"")
+                    .replace("\\\\", "\\")
+                    .replace("\\/", "/");
+            log.info("Unescaped message: {}", message);
+        }
+
+        JsonNode root = objectMapper.readTree(message);
+
+        // Extraer y registrar los campos individuales para debug
+        String eventId = root.has("eventId") ? root.get("eventId").asText() : "unknown-event-id";
+        log.info("Extracted eventId: {}", eventId);
+
+        String orderNumber = root.has("orderNumber") ? root.get("orderNumber").asText() : "unknown";
+        log.info("Extracted orderNumber: {}", orderNumber);
+
+        // Verificar si customer existe y registrar su contenido
+        if (root.has("customer") && !root.get("customer").isNull()) {
+            JsonNode customerNode = root.get("customer");
+            log.info("Customer node exists: {}", customerNode);
+        } else {
+            log.error("Customer node is missing or null in the message");
+        }
+
+        // Continuar con el mapeo
         EventData eventData = extractEventData(root);
 
         return new OrderCreatedEvent(
@@ -38,7 +74,8 @@ public class KafkaEventMapper {
                 eventData.items,
                 eventData.customer,
                 eventData.address,
-                eventData.createdAt);
+                eventData.createdAt
+        );
     }
 
     public OrderDeliveredEvent mapToOrderDeliveredEvent(String message) throws Exception {
@@ -127,36 +164,33 @@ public class KafkaEventMapper {
     }
 
     private Customer mapCustomer(JsonNode node) {
-        if (node == null || node.isNull()) {
-            return new Customer();
-        }
-
-        String name = (node.has("name") && !node.get("name").isNull())
-                ? node.get("name").asText()
-                : "Unknown";
-
-        String email = (node.has("email") && !node.get("email").isNull())
-                ? node.get("email").asText()
-                : "no-email@example.com";
-
-        String phone = (node.has("phone") && !node.get("phone").isNull())
-                ? node.get("phone").asText()
-                : "";
-
-        if ("Unknown".equals(name)) {
-            log.warn("Customer name is missing in the event. Defaulting to 'Unknown'.");
-        }
-        if ("no-email@example.com".equals(email)) {
-            log.warn("Customer email is missing in the event. Defaulting to 'no-email@example.com'.");
-        }
-        if (phone.isEmpty()) {
-            log.warn("Customer phone is missing in the event. Defaulting to empty string.");
-        }
-
         Customer customer = new Customer();
-        customer.setName(name);
+
+        if (node == null || node.isNull()) {
+            Customer defaultCustomer = new Customer();
+            defaultCustomer.setName("Unknown Customer");
+            defaultCustomer.setEmail("me@gmail.com"); // Usar el email de soporte como fallback
+            defaultCustomer.setPhone("");
+            return defaultCustomer;
+        }
+
+        // Mapear propiedades con valores por defecto
+        customer.setName(node.has("name") ? node.get("name").asText("Customer") : "Customer");
+
+        // Asegurarnos que el email nunca sea nulo
+        String email = null;
+        if (node.has("email") && !node.get("email").isNull()) {
+            email = node.get("email").asText();
+        }
+
+        // Si email sigue siendo nulo o vacío, usar un email de soporte
+        if (email == null || email.isEmpty()) {
+            log.warn("Customer email is null or empty, using support email");
+            email = "supportemail@yourdomain.com"; // Usa una dirección de soporte válida
+        }
+
         customer.setEmail(email);
-        customer.setPhone(phone);
+        customer.setPhone(node.has("phone") ? node.get("phone").asText("") : "");
 
         return customer;
     }

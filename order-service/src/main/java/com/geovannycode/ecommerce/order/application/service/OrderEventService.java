@@ -2,6 +2,7 @@ package com.geovannycode.ecommerce.order.application.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.geovannycode.ecommerce.order.application.ports.output.EventPublisherPort;
 import com.geovannycode.ecommerce.order.application.ports.output.OrderEventRepository;
 import com.geovannycode.ecommerce.order.common.model.OrderCancelledEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
@@ -24,15 +25,15 @@ public class OrderEventService {
     private static final Logger log = LoggerFactory.getLogger(OrderEventService.class);
 
     private final OrderEventRepository orderEventRepository;
-    private final OrderEventPublisher orderEventPublisher;
+    private final EventPublisherPort eventPublisher;
     private final ObjectMapper objectMapper;
 
     public OrderEventService(
             OrderEventRepository orderEventRepository,
-            OrderEventPublisher orderEventPublisher,
+            EventPublisherPort eventPublisher,
             ObjectMapper objectMapper) {
         this.orderEventRepository = orderEventRepository;
-        this.orderEventPublisher = orderEventPublisher;
+        this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
     }
 
@@ -91,21 +92,21 @@ public class OrderEventService {
         switch (eventType) {
             case ORDER_CREATED:
                 OrderCreatedEvent orderCreatedEvent = fromJsonPayload(event.getPayload(), OrderCreatedEvent.class);
-                orderEventPublisher.publish(orderCreatedEvent);
+                eventPublisher.publish(orderCreatedEvent);
                 break;
             case ORDER_DELIVERED:
                 OrderDeliveredEvent orderDeliveredEvent =
                         fromJsonPayload(event.getPayload(), OrderDeliveredEvent.class);
-                orderEventPublisher.publish(orderDeliveredEvent);
+                eventPublisher.publish(orderDeliveredEvent);
                 break;
             case ORDER_CANCELLED:
                 OrderCancelledEvent orderCancelledEvent =
                         fromJsonPayload(event.getPayload(), OrderCancelledEvent.class);
-                orderEventPublisher.publish(orderCancelledEvent);
+                eventPublisher.publish(orderCancelledEvent);
                 break;
             case ORDER_PROCESSING_FAILED:
                 OrderErrorEvent orderErrorEvent = fromJsonPayload(event.getPayload(), OrderErrorEvent.class);
-                orderEventPublisher.publish(orderErrorEvent);
+                eventPublisher.publish(orderErrorEvent);
                 break;
             default:
                 log.warn("Unsupported OrderEventType: {}", eventType);
@@ -131,6 +132,27 @@ public class OrderEventService {
     @Scheduled(fixedDelay = 30000)
     @Transactional
     public void schedulePublishOrderEvents() {
-        this.publishOrderEvents();
+        log.info("Starting scheduled publication of order events");
+
+        Sort sort = Sort.by("createdAt").ascending();
+        List<OrderEventEntity> events = orderEventRepository.findAll(sort);
+        log.info("Found {} Order Events to be published", events.size());
+
+        for (OrderEventEntity event : events) {
+            try {
+                log.info("Publishing event: type={}, orderNumber={}, eventId={}",
+                        event.getEventType(), event.getOrderNumber(), event.getEventId());
+
+                this.publishEvent(event);
+
+                log.info("Successfully published event: {}", event.getEventId());
+                orderEventRepository.delete(event);
+            } catch (Exception e) {
+                log.error("Error publishing event {}: {}", event.getEventId(), e.getMessage(), e);
+                // Opcionalmente, podrías marcar el evento como fallido o reintentar después
+            }
+        }
+
+        log.info("Completed scheduled publication of order events");
     }
 }

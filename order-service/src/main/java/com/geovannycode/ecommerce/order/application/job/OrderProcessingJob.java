@@ -23,20 +23,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderProcessingJob {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(OrderProcessingJob.class);
     private final OrderService orderService;
-    private final OrderEventPublisher orderEventPublisher;
 
     public OrderProcessingJob(OrderService orderService, OrderEventPublisher orderEventPublisher) {
         this.orderService = orderService;
-        this.orderEventPublisher = orderEventPublisher;
     }
 
     @Scheduled(fixedDelay = 60000)
     @Transactional
     public void processNewOrders() {
         List<OrderEntity> newOrders = orderService.findOrdersByStatus(OrderStatus.NEW);
+        log.info("Found {} new orders to process", newOrders.size());
+
         for (OrderEntity order : newOrders) {
-            OrderCreatedEvent orderCreatedEvent = this.buildOrderCreatedEvent(order);
-            orderEventPublisher.publish(orderCreatedEvent);
             log.info("Published OrderCreatedEvent for orderId:{}", order.getOrderNumber());
             orderService.updateOrderStatus(order.getOrderNumber(), OrderStatus.IN_PROCESS, null);
         }
@@ -46,9 +44,9 @@ public class OrderProcessingJob {
     @Transactional
     public void processPaymentRejectedOrders() {
         List<OrderEntity> orders = orderService.findOrdersByStatus(OrderStatus.PAYMENT_REJECTED);
+        log.info("Found {} payment rejected orders to process", orders.size());
         for (OrderEntity order : orders) {
-            OrderErrorEvent orderErrorEvent = this.buildOrderErrorEvent(order, "Payment rejected");
-            orderEventPublisher.publish(orderErrorEvent);
+            orderService.updateOrderStatus(order.getOrderNumber(), OrderStatus.ERROR, "Payment rejected");
             log.info("Published OrderErrorEvent for orderId:{}", order.getOrderNumber());
         }
     }

@@ -3,6 +3,7 @@ package com.geovannycode.ecommerce.order.infrastructure.output.events;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.geovannycode.ecommerce.order.ApplicationProperties;
+import com.geovannycode.ecommerce.order.application.ports.output.EventPublisherPort;
 import com.geovannycode.ecommerce.order.common.model.OrderCancelledEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderDeliveredEvent;
@@ -11,7 +12,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OrderEventPublisher {
+public class OrderEventPublisher implements EventPublisherPort {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ApplicationProperties properties;
     private final ObjectMapper objectMapper;
