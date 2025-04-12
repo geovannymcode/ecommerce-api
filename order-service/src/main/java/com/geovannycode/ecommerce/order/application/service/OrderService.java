@@ -84,14 +84,15 @@ public class OrderService
         log.info("Created Order with orderNumber={}", savedOrder.getOrderNumber());
         try {
             OrderCreatedEvent orderCreatedEvent = OrderEventMapper.buildOrderCreatedEvent(savedOrder);
+            log.info("Calling orderEventService.save() with eventId: {}", orderCreatedEvent.getEventId());
             orderEventService.save(orderCreatedEvent);
+            log.info("Successfully called orderEventService.save()");
         } catch (Exception e) {
             log.error(
                     "Failed to create order event for orderNumber={}: {}",
                     savedOrder.getOrderNumber(),
                     e.getMessage(),
                     e);
-            // No lanzamos la excepción para no afectar la creación de la orden
         }
         return new CreateOrderResponse(savedOrder.getOrderNumber());
     }

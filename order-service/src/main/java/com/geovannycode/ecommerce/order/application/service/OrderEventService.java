@@ -9,7 +9,6 @@ import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderDeliveredEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
 import com.geovannycode.ecommerce.order.common.model.enums.OrderEventType;
-import com.geovannycode.ecommerce.order.infrastructure.output.events.OrderEventPublisher;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEventEntity;
 import java.util.List;
 import org.slf4j.Logger;
@@ -38,13 +37,25 @@ public class OrderEventService {
     }
 
     public void save(OrderCreatedEvent event) {
-        OrderEventEntity orderEvent = new OrderEventEntity();
-        orderEvent.setEventId(event.getEventId());
-        orderEvent.setEventType(OrderEventType.ORDER_CREATED);
-        orderEvent.setOrderNumber(event.getOrderNumber());
-        orderEvent.setCreatedAt(event.getCreatedAt());
-        orderEvent.setPayload(toJsonPayload(event));
-        this.orderEventRepository.save(orderEvent);
+        try {
+            log.info("Saving OrderCreatedEvent with ID: {} for order: {}",
+                    event.getEventId(), event.getOrderNumber());
+
+            OrderEventEntity orderEvent = new OrderEventEntity();
+            orderEvent.setEventId(event.getEventId());
+            orderEvent.setEventType(OrderEventType.ORDER_CREATED);
+            orderEvent.setOrderNumber(event.getOrderNumber());
+            orderEvent.setCreatedAt(event.getCreatedAt());
+            orderEvent.setPayload(toJsonPayload(event));
+
+            log.debug("Payload generado: {}", orderEvent.getPayload());
+            this.orderEventRepository.save(orderEvent);
+            log.debug("Evento completo antes de guardar: {}", orderEvent);
+            log.info("Successfully saved OrderEventEntity with ID: {}", orderEvent.getEventId());
+        } catch (Exception e) {
+            log.error("Error saving OrderCreatedEvent: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     public void save(OrderDeliveredEvent event) {
@@ -149,7 +160,7 @@ public class OrderEventService {
                 orderEventRepository.delete(event);
             } catch (Exception e) {
                 log.error("Error publishing event {}: {}", event.getEventId(), e.getMessage(), e);
-                // Opcionalmente, podrías marcar el evento como fallido o reintentar después
+
             }
         }
 

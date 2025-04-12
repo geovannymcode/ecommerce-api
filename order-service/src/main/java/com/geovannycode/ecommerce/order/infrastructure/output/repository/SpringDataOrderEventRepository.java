@@ -9,6 +9,5 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface SpringDataOrderEventRepository extends JpaRepository<OrderEventEntity, Long> {
 
-    @Query("SELECT o FROM OrderEntity o JOIN FETCH o.items WHERE o.status = :status")
-    List<OrderEntity> findOrderByStatus(OrderStatus status);
+    boolean existsByEventId(String eventId);
 }
