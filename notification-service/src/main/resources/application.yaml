@@ -21,10 +21,10 @@ spring:
             enable: true
 
 server:
-  port: 8083
+  port: 8084
   shutdown: graceful
 
-# Configuración para Kafka
+# Configuraciï¿½n para Kafka
 notification:
   order-created-topic: order-created
   order-delivered-topic: order-delivered

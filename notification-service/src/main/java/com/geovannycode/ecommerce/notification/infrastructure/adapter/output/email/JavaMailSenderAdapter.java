@@ -1,7 +1,7 @@
 package com.geovannycode.ecommerce.notification.infrastructure.adapter.output.email;
 
-import com.geovannycode.ecommerce.notification.infrastructure.config.ApplicationProperties;
 import com.geovannycode.ecommerce.notification.domain.port.output.EmailSenderPort;
+import com.geovannycode.ecommerce.notification.infrastructure.config.ApplicationProperties;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +16,7 @@ public class JavaMailSenderAdapter implements EmailSenderPort {
     private final JavaMailSender emailSender;
     private final String supportEmail;
 
-    public JavaMailSenderAdapter(JavaMailSender emailSender,
-                                 ApplicationProperties properties) {
+    public JavaMailSenderAdapter(JavaMailSender emailSender, ApplicationProperties properties) {
         this.emailSender = emailSender;
         this.supportEmail = properties.getSupportEmail();
     }

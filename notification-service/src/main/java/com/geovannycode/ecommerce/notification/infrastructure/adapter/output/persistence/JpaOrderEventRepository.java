@@ -17,5 +17,4 @@ public class JpaOrderEventRepository implements OrderEventRepositoryPort {
     public boolean existsByEventId(String eventId) {
         return repository.existsByEventId(eventId);
     }
-
 }

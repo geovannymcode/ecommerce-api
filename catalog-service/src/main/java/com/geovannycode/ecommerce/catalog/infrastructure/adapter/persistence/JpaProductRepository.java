@@ -1,7 +1,7 @@
 package com.geovannycode.ecommerce.catalog.infrastructure.adapter.persistence;
 
-import com.geovannycode.ecommerce.catalog.domain.port.output.ProductRepository;
 import com.geovannycode.ecommerce.catalog.domain.model.Product;
+import com.geovannycode.ecommerce.catalog.domain.port.output.ProductRepository;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

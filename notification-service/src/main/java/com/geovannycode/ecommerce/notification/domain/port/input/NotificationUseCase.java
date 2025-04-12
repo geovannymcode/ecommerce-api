@@ -7,7 +7,10 @@ import com.geovannycode.ecommerce.notification.domain.model.OrderErrorEvent;
 
 public interface NotificationUseCase {
     void sendOrderCreatedNotification(OrderCreatedEvent event);
+
     void sendOrderDeliveredNotification(OrderDeliveredEvent event);
+
     void sendOrderCancelledNotification(OrderCancelledEvent event);
+
     void sendOrderErrorEventNotification(OrderErrorEvent event);
 }
