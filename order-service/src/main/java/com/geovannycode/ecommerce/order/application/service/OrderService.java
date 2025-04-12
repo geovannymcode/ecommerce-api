@@ -5,6 +5,7 @@ import com.geovannycode.ecommerce.order.application.ports.input.CreateOrderUseCa
 import com.geovannycode.ecommerce.order.application.ports.input.FindOrdersUseCase;
 import com.geovannycode.ecommerce.order.application.ports.input.FindUserOrderUseCase;
 import com.geovannycode.ecommerce.order.application.ports.input.ProcessNewOrdersUseCase;
+import com.geovannycode.ecommerce.order.application.ports.input.UpdateOrderStatusUseCase;
 import com.geovannycode.ecommerce.order.application.ports.output.OrderRepository;
 import com.geovannycode.ecommerce.order.common.model.CreateOrderRequest;
 import com.geovannycode.ecommerce.order.common.model.CreateOrderResponse;
@@ -39,16 +40,19 @@ public class OrderService
     private final OrderValidator orderValidator;
     private final OrderEventService orderEventService;
     private final PaymentServiceClient paymentServiceClient;
+    private final UpdateOrderStatusUseCase updateOrderStatusUseCase;
 
     public OrderService(
             OrderRepository orderRepository,
             OrderValidator orderValidator,
             OrderEventService orderEventService,
-            PaymentServiceClient paymentServiceClient) {
+            PaymentServiceClient paymentServiceClient,
+            UpdateOrderStatusUseCase updateOrderStatusUseCase) {
         this.orderRepository = orderRepository;
         this.orderValidator = orderValidator;
         this.orderEventService = orderEventService;
         this.paymentServiceClient = paymentServiceClient;
+        this.updateOrderStatusUseCase = updateOrderStatusUseCase;
     }
 
     @Override
@@ -122,33 +126,16 @@ public class OrderService
         try {
             if (canBeDelivered(order)) {
                 log.info("OrderNumber: {} can be delivered", order.getOrderNumber());
-                orderRepository.updateOrderStatus(order.getOrderNumber(), OrderStatus.DELIVERED);
-                try {
-                    orderEventService.save(OrderEventMapper.buildOrderDeliveredEvent(order));
-                    log.info("Order delivered event saved for orderNumber={}", order.getOrderNumber());
-                } catch (Exception e) {
-                    log.error("Failed to save order delivered event: {}", e.getMessage(), e);
-                }
+                updateOrderStatusUseCase.updateOrderStatus(
+                        order.getOrderNumber(), OrderStatus.DELIVERED, "Order processed successfully");
             } else {
                 log.info("OrderNumber: {} can not be delivered", order.getOrderNumber());
-                orderRepository.updateOrderStatus(order.getOrderNumber(), OrderStatus.CANCELLED);
-                try {
-                    orderEventService.save(
-                            OrderEventMapper.buildOrderCancelledEvent(order, "Can't deliver to the location"));
-                    log.info("Order cancelled event saved for orderNumber={}", order.getOrderNumber());
-                } catch (Exception e) {
-                    log.error("Failed to save order cancelled event: {}", e.getMessage(), e);
-                }
+                updateOrderStatusUseCase.updateOrderStatus(
+                        order.getOrderNumber(), OrderStatus.CANCELLED, "Can't deliver to the location");
             }
         } catch (RuntimeException e) {
             log.error("Failed to process Order with orderNumber: {}", order.getOrderNumber(), e);
-            orderRepository.updateOrderStatus(order.getOrderNumber(), OrderStatus.ERROR);
-            try {
-                orderEventService.save(OrderEventMapper.buildOrderErrorEvent(order, e.getMessage()));
-                log.info("Order error event saved for orderNumber={}", order.getOrderNumber());
-            } catch (Exception ex) {
-                log.error("Failed to save order error event: {}", ex.getMessage(), ex);
-            }
+            updateOrderStatusUseCase.updateOrderStatus(order.getOrderNumber(), OrderStatus.ERROR, e.getMessage());
         }
     }
 
@@ -175,42 +162,10 @@ public class OrderService
             throw new OrderCancellationException(order.getOrderNumber(), "Order is already delivered");
         }
 
-        order.setStatus(OrderStatus.CANCELLED);
-        orderRepository.save(order);
-
-        try {
-            orderEventService.save(OrderEventMapper.buildOrderCancelledEvent(order, "Order cancelled by user"));
-            log.info("Order cancelled event saved for orderNumber={}", order.getOrderNumber());
-        } catch (Exception e) {
-            log.error("Failed to save order cancelled event: {}", e.getMessage(), e);
-        }
+        updateOrderStatusUseCase.updateOrderStatus(orderNumber, OrderStatus.CANCELLED, "Order cancelled by user");
     }
 
     public void updateOrderStatus(String orderNumber, OrderStatus status, String comments) {
-        OrderEntity order = orderRepository
-                .findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new OrderNotFoundException(orderNumber));
-
-        order.setStatus(status);
-        if (comments != null) {
-            order.setComments(comments);
-        }
-        orderRepository.save(order);
-
-        try {
-            // Crear eventos para estados específicos que son soportados por OrderEventService
-            if (status == OrderStatus.DELIVERED) {
-                orderEventService.save(OrderEventMapper.buildOrderDeliveredEvent(order));
-                log.info("Order delivered event saved for orderNumber={}", order.getOrderNumber());
-            } else if (status == OrderStatus.CANCELLED) {
-                orderEventService.save(OrderEventMapper.buildOrderCancelledEvent(order, comments));
-                log.info("Order cancelled event saved for orderNumber={}", order.getOrderNumber());
-            } else if (status == OrderStatus.ERROR) {
-                orderEventService.save(OrderEventMapper.buildOrderErrorEvent(order, comments));
-                log.info("Order error event saved for orderNumber={}", order.getOrderNumber());
-            }
-        } catch (Exception e) {
-            log.error("Failed to save order status update event: {}", e.getMessage(), e);
-        }
+        updateOrderStatusUseCase.updateOrderStatus(orderNumber, status, comments);
     }
 }
