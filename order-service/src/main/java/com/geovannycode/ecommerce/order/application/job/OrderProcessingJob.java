@@ -5,7 +5,6 @@ import com.geovannycode.ecommerce.order.application.service.OrderService;
 import com.geovannycode.ecommerce.order.common.model.Address;
 import com.geovannycode.ecommerce.order.common.model.Customer;
 import com.geovannycode.ecommerce.order.common.model.OrderCancelledEvent;
-import com.geovannycode.ecommerce.order.common.model.OrderCreatedEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderDeliveredEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderItem;
