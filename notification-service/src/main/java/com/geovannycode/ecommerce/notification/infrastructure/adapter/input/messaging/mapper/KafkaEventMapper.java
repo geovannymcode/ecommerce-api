@@ -32,19 +32,9 @@ public class KafkaEventMapper {
     }
 
     public OrderCreatedEvent mapToOrderCreatedEvent(String message) throws Exception {
+        log.info("Starting to map message for OrderCreatedEvent of length: {}", message.length());
 
-        log.info("Starting to map message of length: {}", message.length());
-
-        // Si el mensaje está entre comillas y contiene caracteres escapados, eliminamos las comillas
-        if (message.startsWith("\"") && message.endsWith("\"")) {
-            // Eliminar las comillas externas
-            message = message.substring(1, message.length() - 1);
-            // Desescapar el JSON interno
-            message = message.replace("\\\"", "\"").replace("\\\\", "\\").replace("\\/", "/");
-            log.info("Unescaped message: {}", message);
-        }
-
-        JsonNode root = objectMapper.readTree(message);
+        JsonNode root = parseMessage(message);
 
         // Extraer y registrar los campos individuales para debug
         String eventId = root.has("eventId") ? root.get("eventId").asText() : "unknown-event-id";
@@ -58,11 +48,26 @@ public class KafkaEventMapper {
             JsonNode customerNode = root.get("customer");
             log.info("Customer node exists: {}", customerNode);
         } else {
-            log.error("Customer node is missing or null in the message");
+            log.warn("Customer node is missing or null in OrderCreatedEvent message");
         }
 
-        // Continuar con el mapeo
         EventData eventData = extractEventData(root);
+
+        // Validación adicional para customer
+        if (eventData.customer == null
+                || eventData.customer.getEmail() == null
+                || eventData.customer.getEmail().isEmpty()) {
+            log.warn("Customer or email is null for OrderCreatedEvent for order: {}", orderNumber);
+            eventData.customer = new Customer();
+            eventData.customer.setName("Customer");
+            eventData.customer.setEmail("default@example.com");
+            eventData.customer.setPhone("N/A");
+        }
+
+        log.info(
+                "Created OrderCreatedEvent for order: {} with customer email: {}",
+                orderNumber,
+                eventData.customer.getEmail());
 
         return new OrderCreatedEvent(
                 eventData.eventId,
@@ -74,8 +79,42 @@ public class KafkaEventMapper {
     }
 
     public OrderDeliveredEvent mapToOrderDeliveredEvent(String message) throws Exception {
+        log.info("Starting to map message for OrderDeliveredEvent of length: {}", message.length());
+
         JsonNode root = parseMessage(message);
+
+        // Extraer y registrar los campos individuales para debug
+        String eventId = root.has("eventId") ? root.get("eventId").asText() : "unknown-event-id";
+        log.info("Extracted eventId: {}", eventId);
+
+        String orderNumber = root.has("orderNumber") ? root.get("orderNumber").asText() : "unknown";
+        log.info("Extracted orderNumber: {}", orderNumber);
+
+        // Verificar si customer existe y registrar su contenido
+        if (root.has("customer") && !root.get("customer").isNull()) {
+            JsonNode customerNode = root.get("customer");
+            log.info("Customer node exists: {}", customerNode);
+        } else {
+            log.warn("Customer node is missing or null in OrderDeliveredEvent message");
+        }
+
         EventData eventData = extractEventData(root);
+
+        // Validación adicional para customer
+        if (eventData.customer == null
+                || eventData.customer.getEmail() == null
+                || eventData.customer.getEmail().isEmpty()) {
+            log.warn("Customer or email is null for OrderDeliveredEvent for order: {}", orderNumber);
+            eventData.customer = new Customer();
+            eventData.customer.setName("Customer");
+            eventData.customer.setEmail("default@example.com");
+            eventData.customer.setPhone("N/A");
+        }
+
+        log.info(
+                "Created OrderDeliveredEvent for order: {} with customer email: {}",
+                orderNumber,
+                eventData.customer.getEmail());
 
         return new OrderDeliveredEvent(
                 eventData.eventId,
@@ -87,9 +126,43 @@ public class KafkaEventMapper {
     }
 
     public OrderCancelledEvent mapToOrderCancelledEvent(String message) throws Exception {
+        log.info("Starting to map message for OrderCancelledEvent of length: {}", message.length());
+
         JsonNode root = parseMessage(message);
+
+        // Extraer y registrar los campos individuales para debug
+        String eventId = root.has("eventId") ? root.get("eventId").asText() : "unknown-event-id";
+        log.info("Extracted eventId: {}", eventId);
+
+        String orderNumber = root.has("orderNumber") ? root.get("orderNumber").asText() : "unknown";
+        log.info("Extracted orderNumber: {}", orderNumber);
+
+        // Verificar si customer existe y registrar su contenido
+        if (root.has("customer") && !root.get("customer").isNull()) {
+            JsonNode customerNode = root.get("customer");
+            log.info("Customer node exists: {}", customerNode);
+        } else {
+            log.warn("Customer node is missing or null in OrderCancelledEvent message");
+        }
+
         EventData eventData = extractEventData(root);
         String reason = root.has("reason") ? root.get("reason").asText("No reason provided") : "No reason provided";
+
+        // Validación adicional para customer
+        if (eventData.customer == null
+                || eventData.customer.getEmail() == null
+                || eventData.customer.getEmail().isEmpty()) {
+            log.warn("Customer or email is null for OrderCancelledEvent for order: {}", orderNumber);
+            eventData.customer = new Customer();
+            eventData.customer.setName("Customer");
+            eventData.customer.setEmail("default@example.com");
+            eventData.customer.setPhone("N/A");
+        }
+
+        log.info(
+                "Created OrderCancelledEvent for order: {} with customer email: {}",
+                orderNumber,
+                eventData.customer.getEmail());
 
         return new OrderCancelledEvent(
                 eventData.eventId,
@@ -102,9 +175,43 @@ public class KafkaEventMapper {
     }
 
     public OrderErrorEvent mapToOrderErrorEvent(String message) throws Exception {
+        log.info("Starting to map message for OrderErrorEvent of length: {}", message.length());
+
         JsonNode root = parseMessage(message);
+
+        // Extraer y registrar los campos individuales para debug
+        String eventId = root.has("eventId") ? root.get("eventId").asText() : "unknown-event-id";
+        log.info("Extracted eventId: {}", eventId);
+
+        String orderNumber = root.has("orderNumber") ? root.get("orderNumber").asText() : "unknown";
+        log.info("Extracted orderNumber: {}", orderNumber);
+
+        // Verificar si customer existe y registrar su contenido
+        if (root.has("customer") && !root.get("customer").isNull()) {
+            JsonNode customerNode = root.get("customer");
+            log.info("Customer node exists: {}", customerNode);
+        } else {
+            log.warn("Customer node is missing or null in OrderErrorEvent message");
+        }
+
         EventData eventData = extractEventData(root);
         String reason = root.has("reason") ? root.get("reason").asText("Unknown error") : "Unknown error";
+
+        // Validación adicional para customer
+        if (eventData.customer == null
+                || eventData.customer.getEmail() == null
+                || eventData.customer.getEmail().isEmpty()) {
+            log.warn("Customer or email is null for OrderErrorEvent for order: {}", orderNumber);
+            eventData.customer = new Customer();
+            eventData.customer.setName("Customer");
+            eventData.customer.setEmail("default@example.com");
+            eventData.customer.setPhone("N/A");
+        }
+
+        log.info(
+                "Created OrderErrorEvent for order: {} with customer email: {}",
+                orderNumber,
+                eventData.customer.getEmail());
 
         return new OrderErrorEvent(
                 eventData.eventId,
@@ -118,6 +225,13 @@ public class KafkaEventMapper {
 
     private JsonNode parseMessage(String message) throws Exception {
         try {
+            // Si el mensaje está entre comillas y contiene caracteres escapados, eliminamos las comillas
+            if (message.startsWith("\"") && message.endsWith("\"")) {
+                message = message.substring(1, message.length() - 1);
+                message = message.replace("\\\"", "\"").replace("\\\\", "\\").replace("\\/", "/");
+                log.debug("Unescaped message: {}", message);
+            }
+
             JsonNode root = objectMapper.readTree(message);
             log.debug("Parsed JSON structure: {}", root.toString());
             return root;
@@ -162,11 +276,11 @@ public class KafkaEventMapper {
         Customer customer = new Customer();
 
         if (node == null || node.isNull()) {
-            Customer defaultCustomer = new Customer();
-            defaultCustomer.setName("Unknown Customer");
-            defaultCustomer.setEmail("me@gmail.com"); // Usar el email de soporte como fallback
-            defaultCustomer.setPhone("");
-            return defaultCustomer;
+            log.warn("Customer node is null, creating default customer");
+            customer.setName("Unknown Customer");
+            customer.setEmail("default@example.com"); // Usar un email por defecto
+            customer.setPhone("N/A");
+            return customer;
         }
 
         // Mapear propiedades con valores por defecto
@@ -178,15 +292,16 @@ public class KafkaEventMapper {
             email = node.get("email").asText();
         }
 
-        // Si email sigue siendo nulo o vacío, usar un email de soporte
+        // Si email sigue siendo nulo o vacío, usar un email por defecto
         if (email == null || email.isEmpty()) {
-            log.warn("Customer email is null or empty, using support email");
-            email = "supportemail@yourdomain.com"; // Usa una dirección de soporte válida
+            log.warn("Customer email is null or empty, using default email");
+            email = "default@example.com"; // Usa una dirección por defecto
         }
 
         customer.setEmail(email);
-        customer.setPhone(node.has("phone") ? node.get("phone").asText("") : "");
+        customer.setPhone(node.has("phone") ? node.get("phone").asText("N/A") : "N/A");
 
+        log.info("Mapped customer: name={}, email={}", customer.getName(), customer.getEmail());
         return customer;
     }
 

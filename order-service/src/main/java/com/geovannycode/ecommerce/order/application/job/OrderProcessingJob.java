@@ -39,7 +39,7 @@ public class OrderProcessingJob {
         log.info("Found {} new orders to process", newOrders.size());
 
         for (OrderEntity order : newOrders) {
-            orderService.updateOrderStatus(order.getOrderNumber(), OrderStatus.IN_PROCESS, null);
+            orderService.updateOrderStatus(order.getOrderNumber(), OrderStatus.IN_PROCESS, "Order in process");
             log.info("Published OrderCreatedEvent for orderId:{}", order.getOrderNumber());
         }
     }
@@ -57,16 +57,6 @@ public class OrderProcessingJob {
 
             log.info("Published OrderErrorEvent for orderId:{}", order.getOrderNumber());
         }
-    }
-
-    private OrderCreatedEvent buildOrderCreatedEvent(OrderEntity order) {
-        return new OrderCreatedEvent(
-                UUID.randomUUID().toString(),
-                order.getOrderNumber(),
-                getOrderItems(order),
-                getCustomer(order),
-                getDeliveryAddress(order),
-                LocalDateTime.now());
     }
 
     private OrderErrorEvent buildOrderErrorEvent(OrderEntity order, String reason) {

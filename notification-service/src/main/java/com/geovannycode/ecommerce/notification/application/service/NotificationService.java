@@ -58,6 +58,20 @@ public class NotificationService implements NotificationUseCase {
 
     @Override
     public void sendOrderDeliveredNotification(OrderDeliveredEvent event) {
+        // Verificar si el cliente es nulo
+        if (event.getCustomer() == null) {
+            log.error("Cannot send notification: Customer is null for orderNumber: {}", event.getOrderNumber());
+            return;
+        }
+
+        // Verificar si el email es nulo
+        if (event.getCustomer().getEmail() == null
+                || event.getCustomer().getEmail().isEmpty()) {
+            log.error(
+                    "Cannot send notification: Customer email is null or empty for orderNumber: {}",
+                    event.getOrderNumber());
+            return;
+        }
         String message =
                 """
                 ===================================================
