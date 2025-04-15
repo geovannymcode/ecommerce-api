@@ -12,6 +12,9 @@ server:
   port: 8081
   shutdown: graceful
 
+swagger:
+  api-gateway-url: http://localhost:8989/catalog
+
 management:
   endpoints:
     web:
