@@ -1,7 +1,9 @@
 package com.geovannycode.ecommerce.order.infrastructure.output.repository;
 
 import com.geovannycode.ecommerce.order.application.ports.output.OrderEventRepository;
+import com.geovannycode.ecommerce.order.common.model.enums.OrderEventType;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEventEntity;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Sort;
@@ -39,5 +41,17 @@ public class JpaOrderEventRepository implements OrderEventRepository {
     @Override
     public boolean existsByEventId(String eventId) {
         return springDataOrderEventRepository.existsByEventId(eventId);
+    }
+
+    @Override
+    public List<OrderEventEntity> findByPublishedFalse(Sort sort) {
+        return springDataOrderEventRepository.findByPublishedFalse(sort);
+    }
+
+    @Override
+    public boolean existsByOrderNumberAndEventTypeAndCreatedAtAfter(
+            String orderNumber, OrderEventType eventType, LocalDateTime createdAt) {
+        return springDataOrderEventRepository.existsByOrderNumberAndEventTypeAndCreatedAtAfter(
+                orderNumber, eventType, createdAt);
     }
 }

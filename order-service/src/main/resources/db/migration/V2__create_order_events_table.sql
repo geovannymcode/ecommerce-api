@@ -9,8 +9,10 @@ create table order_events
     payload      text                                         not null,
     created_at   timestamp                                    not null,
     updated_at   timestamp,
+    published    boolean                                      not null default false,
     primary key (id)
 );
 
 create index idx_order_events_order_number on order_events (order_number);
 create index idx_order_events_event_type on order_events (event_type);
+create index idx_order_events_published on order_events (published);

@@ -1,5 +1,6 @@
 package com.geovannycode.ecommerce.order.application.job;
 
+import com.geovannycode.ecommerce.order.application.ports.output.OrderEventRepository;
 import com.geovannycode.ecommerce.order.application.service.OrderEventService;
 import com.geovannycode.ecommerce.order.application.service.OrderService;
 import com.geovannycode.ecommerce.order.common.model.Address;
@@ -8,9 +9,11 @@ import com.geovannycode.ecommerce.order.common.model.OrderCancelledEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderDeliveredEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderErrorEvent;
 import com.geovannycode.ecommerce.order.common.model.OrderItem;
+import com.geovannycode.ecommerce.order.common.model.enums.OrderEventType;
 import com.geovannycode.ecommerce.order.common.model.enums.OrderStatus;
 import com.geovannycode.ecommerce.order.infrastructure.persistence.entity.OrderEntity;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -25,10 +28,13 @@ public class OrderProcessingJob {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(OrderProcessingJob.class);
     private final OrderService orderService;
     private final OrderEventService orderEventService;
+    private final OrderEventRepository orderEventRepository;
 
-    public OrderProcessingJob(OrderService orderService, OrderEventService orderEventService) {
+    public OrderProcessingJob(
+            OrderService orderService, OrderEventService orderEventService, OrderEventRepository orderEventRepository) {
         this.orderService = orderService;
         this.orderEventService = orderEventService;
+        this.orderEventRepository = orderEventRepository;
     }
 
     @Scheduled(fixedDelay = 60000)
@@ -51,10 +57,13 @@ public class OrderProcessingJob {
         for (OrderEntity order : orders) {
             orderService.updateOrderStatus(order.getOrderNumber(), OrderStatus.ERROR, "Payment rejected");
 
-            OrderErrorEvent errorEvent = buildOrderErrorEvent(order, "Payment rejected");
-            orderEventService.save(errorEvent);
-
-            log.info("Published OrderErrorEvent for orderId:{}", order.getOrderNumber());
+            if (!hasRecentEvent(order.getOrderNumber(), OrderEventType.ORDER_PROCESSING_FAILED)) {
+                OrderErrorEvent errorEvent = buildOrderErrorEvent(order, "Payment rejected");
+                orderEventService.save(errorEvent);
+                log.info("Published OrderErrorEvent for orderId:{}", order.getOrderNumber());
+            } else {
+                log.info("Skipped publishing duplicate OrderErrorEvent for orderId:{}", order.getOrderNumber());
+            }
         }
     }
 
@@ -104,45 +113,70 @@ public class OrderProcessingJob {
                     orderService.updateOrderStatus(
                             order.getOrderNumber(), OrderStatus.DELIVERED, "Order delivered successfully");
 
-                    OrderDeliveredEvent deliveredEvent = new OrderDeliveredEvent(
-                            UUID.randomUUID().toString(),
-                            order.getOrderNumber(),
-                            getOrderItems(order),
-                            getCustomer(order),
-                            getDeliveryAddress(order),
-                            LocalDateTime.now());
-                    orderEventService.save(deliveredEvent);
+                    if (!hasRecentEvent(order.getOrderNumber(), OrderEventType.ORDER_DELIVERED)) {
+                        OrderDeliveredEvent deliveredEvent = new OrderDeliveredEvent(
+                                UUID.randomUUID().toString(),
+                                order.getOrderNumber(),
+                                getOrderItems(order),
+                                getCustomer(order),
+                                getDeliveryAddress(order),
+                                LocalDateTime.now());
+                        orderEventService.save(deliveredEvent);
+                        log.info("Published OrderDeliveredEvent for orderId:{}", order.getOrderNumber());
+                    } else {
+                        log.info(
+                                "Skipped publishing duplicate OrderDeliveredEvent for orderId:{}",
+                                order.getOrderNumber());
+                    }
                 } else {
                     log.info("OrderNumber: {} cannot be delivered", order.getOrderNumber());
                     orderService.updateOrderStatus(
                             order.getOrderNumber(), OrderStatus.CANCELLED, "Cannot deliver to this location");
 
-                    OrderCancelledEvent cancelledEvent = new OrderCancelledEvent(
-                            UUID.randomUUID().toString(),
-                            order.getOrderNumber(),
-                            getOrderItems(order),
-                            getCustomer(order),
-                            getDeliveryAddress(order),
-                            "Cannot deliver to this location",
-                            LocalDateTime.now());
-                    orderEventService.save(cancelledEvent);
+                    if (!hasRecentEvent(order.getOrderNumber(), OrderEventType.ORDER_CANCELLED)) {
+                        OrderCancelledEvent cancelledEvent = new OrderCancelledEvent(
+                                UUID.randomUUID().toString(),
+                                order.getOrderNumber(),
+                                getOrderItems(order),
+                                getCustomer(order),
+                                getDeliveryAddress(order),
+                                "Cannot deliver to this location",
+                                LocalDateTime.now());
+                        orderEventService.save(cancelledEvent);
+                        log.info("Published OrderCancelledEvent for orderId:{}", order.getOrderNumber());
+                    } else {
+                        log.info(
+                                "Skipped publishing duplicate OrderCancelledEvent for orderId:{}",
+                                order.getOrderNumber());
+                    }
                 }
             } catch (Exception e) {
                 log.error("Error processing order {}: {}", order.getOrderNumber(), e.getMessage(), e);
                 orderService.updateOrderStatus(
                         order.getOrderNumber(), OrderStatus.ERROR, "Processing error: " + e.getMessage());
 
-                OrderErrorEvent errorEvent = new OrderErrorEvent(
-                        UUID.randomUUID().toString(),
-                        order.getOrderNumber(),
-                        getOrderItems(order),
-                        getCustomer(order),
-                        getDeliveryAddress(order),
-                        "Processing error: " + e.getMessage(),
-                        LocalDateTime.now());
-                orderEventService.save(errorEvent);
+                if (!hasRecentEvent(order.getOrderNumber(), OrderEventType.ORDER_PROCESSING_FAILED)) {
+                    OrderErrorEvent errorEvent = new OrderErrorEvent(
+                            UUID.randomUUID().toString(),
+                            order.getOrderNumber(),
+                            getOrderItems(order),
+                            getCustomer(order),
+                            getDeliveryAddress(order),
+                            "Processing error: " + e.getMessage(),
+                            LocalDateTime.now());
+                    orderEventService.save(errorEvent);
+                    log.info("Published OrderErrorEvent for orderId:{}", order.getOrderNumber());
+                } else {
+                    log.info("Skipped publishing duplicate OrderErrorEvent for orderId:{}", order.getOrderNumber());
+                }
             }
         }
+    }
+
+    private boolean hasRecentEvent(String orderNumber, OrderEventType eventType) {
+        LocalDateTime cutoffTime = LocalDateTime.now().minus(24, ChronoUnit.HOURS);
+        return orderEventRepository.existsByOrderNumberAndEventTypeAndCreatedAtAfter(
+                orderNumber, eventType, cutoffTime);
     }
 
     private boolean canDeliverToCountry(String country) {

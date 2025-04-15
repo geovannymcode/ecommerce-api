@@ -64,6 +64,7 @@ public class OrderEventService {
             orderEvent.setOrderNumber(event.getOrderNumber());
             orderEvent.setCreatedAt(event.getCreatedAt());
             orderEvent.setPayload(toJsonPayload(event));
+            orderEvent.setPublished(false);
 
             log.info("Order exists check for orderNumber {}: {}", event.getOrderNumber(), orderExists);
 
@@ -83,6 +84,7 @@ public class OrderEventService {
         orderEvent.setOrderNumber(event.getOrderNumber());
         orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
+        orderEvent.setPublished(false);
         this.orderEventRepository.save(orderEvent);
     }
 
@@ -93,6 +95,7 @@ public class OrderEventService {
         orderEvent.setOrderNumber(event.getOrderNumber());
         orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
+        orderEvent.setPublished(false);
         this.orderEventRepository.save(orderEvent);
     }
 
@@ -103,6 +106,7 @@ public class OrderEventService {
         orderEvent.setOrderNumber(event.getOrderNumber());
         orderEvent.setCreatedAt(event.getCreatedAt());
         orderEvent.setPayload(toJsonPayload(event));
+        orderEvent.setPublished(false);
         this.orderEventRepository.save(orderEvent);
     }
 
@@ -153,8 +157,8 @@ public class OrderEventService {
     public void schedulePublishOrderEvents() {
         log.info("Starting scheduled publication of order events");
 
-        Sort sort = Sort.by("createdAt").ascending();
-        List<OrderEventEntity> events = orderEventRepository.findAll(sort);
+        List<OrderEventEntity> events =
+                orderEventRepository.findByPublishedFalse(Sort.by("createdAt").ascending());
         log.info("Found {} Order Events to be published", events.size());
 
         for (OrderEventEntity event : events) {
@@ -167,6 +171,8 @@ public class OrderEventService {
 
                 this.publishEvent(event);
 
+                event.setPublished(true);
+                orderEventRepository.save(event);
                 log.info("Successfully published event: {}", event.getEventId());
                 // orderEventRepository.delete(event);
             } catch (Exception e) {
