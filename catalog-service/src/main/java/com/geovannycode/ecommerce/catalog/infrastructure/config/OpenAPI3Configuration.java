@@ -22,7 +22,10 @@ public class OpenAPI3Configuration {
                         .title("Catalog Service APIs")
                         .description("BookStore Catalog Service APIs")
                         .version("v1.0.0")
-                        .contact(new Contact().name("SivaLabs").email("sivalabs@sivalabs.in")))
-                .servers(List.of(new Server().url(apiGatewayUrl)));
+                        .contact(new Contact()
+                                .name("GeovannyCode")
+                                .email("me@geovannycode.com")
+                                .url("https://geovannycode.com")))
+                .servers(List.of(new Server().url(apiGatewayUrl).description("URL del API Gateway")));
     }
 }
