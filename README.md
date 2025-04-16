@@ -11,6 +11,7 @@ Project E-commerce Api with Spring Boot and Microservices
 - Payment Service
 - Order Service
 - Notification Service
+- Api Gateway
 
 ---
 
