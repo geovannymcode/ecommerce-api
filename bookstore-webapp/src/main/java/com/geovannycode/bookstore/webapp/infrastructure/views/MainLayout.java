@@ -57,5 +57,5 @@ public class MainLayout extends AppLayout {
 
         return nav;
     }
-    
+
 }

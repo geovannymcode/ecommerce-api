@@ -12,6 +12,7 @@ Project E-commerce Api with Spring Boot and Microservices
 - Order Service
 - Notification Service
 - Api Gateway
+- bookstore-webapp
 
 ---
 
