@@ -88,8 +88,6 @@ public class ProductGridView extends VerticalLayout {
             // Incrementar la página y cargar nuevos datos
             if (currentPage < totalPages - 1) {
                 currentPage++;
-                // Forzar una notificación para confirmar que el clic fue procesado
-                Notification.show("Cargando página " + (currentPage + 1), 2000, Notification.Position.BOTTOM_START);
                 loadProducts();
             }
         });
@@ -114,14 +112,13 @@ public class ProductGridView extends VerticalLayout {
             booksContainer.setVisible(true);
             paginationLayout.setVisible(true);
 
-            // Mostrar el número de página que estamos cargando para depuración
-            log.info("Cargando productos para la página: {}", currentPage);
-
             // Vaciar contenedor actual para mostrar que estamos cargando nuevos datos
             booksContainer.removeAll();
 
+            int apiPageNumber = currentPage + 1;
+
             // Usar ProductService
-            PagedResult<Product> result = productService.getProducts(currentPage);
+            PagedResult<Product> result = productService.getProducts(apiPageNumber);
 
             // Registrar los detalles de la respuesta para depuración
             log.info(
@@ -285,14 +282,25 @@ public class ProductGridView extends VerticalLayout {
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addButton.getStyle().set("display", "block").set("margin", "10px auto").set("padding", "5px 20px");
 
-        // Modificado para evitar el error con stopPropagation
-        addButton.addClickListener(e -> {
-            // Prevenir la navegación al hacer clic en el botón usando preventDefault
-            e.getSource()
-                    .getElement()
-                    .executeJs("arguments[0].stopPropagation()", e.getSource().getElement());
+        nextButton.addClickListener(e -> {
+            if (currentPage < totalPages - 1) {
+                // Incrementar la página antes de cargar los nuevos datos
+                currentPage++;
 
-            Notification.show("Producto añadido al carrito: " + product.name(), 2000, Notification.Position.BOTTOM_END);
+                // Registro detallado antes de cargar
+                log.info("Navegando a la página siguiente: {}", currentPage);
+
+                // Limpiar el contenedor para indicar visualmente que se está cargando
+                booksContainer.removeAll();
+
+                // Cargar productos de la nueva página
+                UI.getCurrent().access(() -> {
+                    loadProducts();
+                });
+
+                // Desplazar al inicio de la página
+                UI.getCurrent().getPage().executeJs("window.scrollTo(0, 0);");
+            }
         });
 
         // Add all components to the card

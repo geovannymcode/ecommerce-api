@@ -24,7 +24,7 @@ public class ProductController {
 
     @GetMapping("/api/products")
     @ResponseBody
-    public PagedResult<Product> products(@RequestParam(name = "page", defaultValue = "0") int page) {
+    public PagedResult<Product> products(@RequestParam(name = "page", defaultValue = "1") int page) {
         log.info("API - Solicitando productos para la página: {}", page);
         PagedResult<Product> result = catalogService.getProducts(page);
         log.info(

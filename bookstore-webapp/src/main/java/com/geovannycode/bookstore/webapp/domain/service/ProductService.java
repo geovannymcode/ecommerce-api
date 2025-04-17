@@ -25,11 +25,6 @@ public class ProductService {
         this.productController = productController;
     }
 
-    /**
-     * Obtiene una lista paginada de productos
-     * @param page Número de página (comenzando en 0)
-     * @return Lista paginada de productos o una lista vacía en caso de error de conexión
-     */
     public PagedResult<Product> getProducts(int page) {
         try {
             log.debug("Solicitando productos para la página {}", page);
@@ -57,35 +52,7 @@ public class ProductService {
         }
     }
 
-    /**
-     * Obtiene un producto por su código
-     * @param code Código del producto
-     * @return Optional con el producto si se encuentra, o vacío en caso de error de conexión
-     */
-    public Optional<Product> getProductByCodeSafe(String code) {
-        try {
-            log.debug("Buscando producto con código: {}", code);
-            Product product = productController.getProductByCode(code);
-            log.debug("Producto encontrado: {}", product.name());
-            return Optional.of(product);
-        } catch (ResourceAccessException e) {
-            log.error("Error de conexión al buscar producto con código {}: {}", code, e.getMessage());
-            return Optional.empty();
-        } catch (ResponseStatusException e) {
-            log.warn("Producto no encontrado con código: {}", code);
-            return Optional.empty();
-        } catch (Exception e) {
-            log.error("Error al obtener producto con código {}: {}", code, e.getMessage(), e);
-            return Optional.empty();
-        }
-    }
 
-    /**
-     * Obtiene un producto por su código
-     * @param code Código del producto
-     * @return Producto encontrado
-     * @throws ResponseStatusException si el producto no se encuentra
-     */
     public Product getProductByCode(String code) {
         try {
             log.debug("Buscando producto con código: {}", code);
