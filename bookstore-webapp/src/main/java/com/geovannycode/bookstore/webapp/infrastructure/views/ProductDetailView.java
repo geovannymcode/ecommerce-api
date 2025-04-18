@@ -24,7 +24,6 @@ public class ProductDetailView extends VerticalLayout implements HasUrlParameter
 
     private final ProductService productService;
 
-    // UI components
     private final H2 title = new H2();
     private final Paragraph description = new Paragraph();
     private final Paragraph price = new Paragraph();
@@ -38,38 +37,31 @@ public class ProductDetailView extends VerticalLayout implements HasUrlParameter
         setPadding(true);
         setSpacing(true);
 
-        // Configure the layout
         configureLayout();
     }
 
     private void configureLayout() {
-        // Image container
         Div imageContainer = new Div(productImage);
         imageContainer.getStyle().set("margin", "0 auto");
 
         productImage.setMaxHeight("300px");
 
-        // Product information
         VerticalLayout infoLayout = new VerticalLayout(title, price, description);
         infoLayout.setSpacing(true);
         infoLayout.setPadding(true);
 
-        // Button to add to cart
         Button addToCartButton = new Button("Add to Cart");
         addToCartButton.addClickListener(e -> addToCart());
 
-        // Button to go back
         Button backButton = new Button("Back to Products");
         backButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate(ProductGridView.class)));
 
         HorizontalLayout actions = new HorizontalLayout(addToCartButton, backButton);
         actions.setSpacing(true);
 
-        // Error message container (initially hidden)
         errorMessage.getStyle().set("color", "red");
         errorMessage.setVisible(false);
 
-        // Main detail layout
         HorizontalLayout detailLayout = new HorizontalLayout(imageContainer, infoLayout);
         detailLayout.setWidthFull();
 
@@ -79,7 +71,6 @@ public class ProductDetailView extends VerticalLayout implements HasUrlParameter
     @Override
     public void setParameter(BeforeEvent event, String productCode) {
         try {
-            // Usar ProductService
             Product product = productService.getProductByCode(productCode);
             displayProduct(product);
         } catch (ResponseStatusException e) {
@@ -93,24 +84,20 @@ public class ProductDetailView extends VerticalLayout implements HasUrlParameter
         title.setText(product.name());
         description.setText(product.description());
 
-        // Format price nicely
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
         price.setText("Price: " + currencyFormat.format(product.price()));
         price.getStyle().set("font-weight", "bold");
 
-        // Set product image if available
         if (product.imageUrl() != null && !product.imageUrl().isEmpty()) {
             productImage.setSrc(product.imageUrl());
             productImage.setAlt(product.name());
             productImage.setVisible(true);
         } else {
-            // Default image
             productImage.setSrc("images/books.png");
             productImage.setAlt(product.name());
             productImage.setVisible(true);
         }
 
-        // Hide error message
         errorMessage.setVisible(false);
     }
 
@@ -118,7 +105,6 @@ public class ProductDetailView extends VerticalLayout implements HasUrlParameter
         errorMessage.setText(message);
         errorMessage.setVisible(true);
 
-        // Hide product details
         title.setVisible(false);
         description.setVisible(false);
         price.setVisible(false);
@@ -126,7 +112,6 @@ public class ProductDetailView extends VerticalLayout implements HasUrlParameter
     }
 
     private void addToCart() {
-        // Esta funcionalidad se implementará más adelante
         Notification.show("Functionality coming soon!", 3000, Notification.Position.BOTTOM_CENTER);
     }
 }
