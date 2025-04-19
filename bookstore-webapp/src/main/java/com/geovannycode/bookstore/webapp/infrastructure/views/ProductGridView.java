@@ -35,26 +35,23 @@ public class ProductGridView extends VerticalLayout {
     private final Span pageInfoLabel;
     private int currentPage = 0;
     private int totalPages = 0;
-    private long totalElements = 0;
+    private Long totalElements;
     private Button prevButton;
     private Button nextButton;
 
     public ProductGridView(ProductService productService) {
         this.productService = productService;
 
-        // Configurar el layout principal
         setPadding(true);
         setSpacing(true);
         setSizeFull();
 
-        // Contenedor de libros con layout flexible para la cuadrícula
         booksContainer = new FlexLayout();
         booksContainer.setWidthFull();
         booksContainer.setFlexWrap(FlexLayout.FlexWrap.WRAP);
         booksContainer.setJustifyContentMode(JustifyContentMode.CENTER);
         booksContainer.getStyle().set("gap", "20px");
 
-        // Vista de error
         errorView = new VerticalLayout();
         errorView.setAlignItems(Alignment.CENTER);
         errorView.setJustifyContentMode(JustifyContentMode.CENTER);
@@ -67,7 +64,6 @@ public class ProductGridView extends VerticalLayout {
 
         errorView.add(errorTitle, errorMessage, retryButton);
 
-        // Componentes de paginación
         prevButton = new Button("Anterior");
         prevButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         prevButton.addClickListener(e -> {
@@ -85,7 +81,6 @@ public class ProductGridView extends VerticalLayout {
         nextButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         nextButton.addClickListener(e -> {
             log.info("Navegando a la página siguiente: {}", currentPage + 1);
-            // Incrementar la página y cargar nuevos datos
             if (currentPage < totalPages - 1) {
                 currentPage++;
                 loadProducts();
@@ -101,26 +96,21 @@ public class ProductGridView extends VerticalLayout {
 
         add(booksContainer, paginationLayout, errorView);
 
-        // Cargar los productos
         loadProducts();
     }
 
     private void loadProducts() {
         try {
-            // Ocultar vista de error y mostrar loading
             errorView.setVisible(false);
             booksContainer.setVisible(true);
             paginationLayout.setVisible(true);
 
-            // Vaciar contenedor actual para mostrar que estamos cargando nuevos datos
             booksContainer.removeAll();
 
             int apiPageNumber = currentPage + 1;
 
-            // Usar ProductService
             PagedResult<Product> result = productService.getProducts(apiPageNumber);
 
-            // Registrar los detalles de la respuesta para depuración
             log.info(
                     "Respuesta del servicio: página={}, totalPages={}, totalElements={}, isFirst={}, isLast={}",
                     result.pageNumber(),
@@ -129,7 +119,7 @@ public class ProductGridView extends VerticalLayout {
                     result.isFirst(),
                     result.isLast());
 
-            // Actualizar información de paginación
+
             totalPages = result.totalPages();
             totalElements = result.totalElements();
             updatePaginationInfo();
@@ -148,22 +138,17 @@ public class ProductGridView extends VerticalLayout {
                 }
             }
 
-            // Desplazar al inicio de la página después de cargar nuevos productos
             UI.getCurrent().getPage().executeJs("window.scrollTo(0, 0);");
 
         } catch (ResourceAccessException e) {
-            // Error de conexión
             showErrorView();
-
             Notification.show(
                             "Error de conexión: No se pudo contactar con el servicio de catálogo",
                             5000,
                             Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         } catch (Exception e) {
-            // Otro tipo de error
             showErrorView();
-
             log.error("Error al cargar productos: ", e);
             Notification.show("Error al cargar productos: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -173,11 +158,9 @@ public class ProductGridView extends VerticalLayout {
     private void updatePaginationInfo() {
         pageInfoLabel.setText(String.format("Página %d de %d", currentPage + 1, Math.max(1, totalPages)));
 
-        // Habilitar/deshabilitar botones según corresponda
         prevButton.setEnabled(currentPage > 0);
         nextButton.setEnabled(currentPage < totalPages - 1);
 
-        // Aplicar estilos adicionales para indicar visualmente cuándo un botón está deshabilitado
         if (!prevButton.isEnabled()) {
             prevButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         } else {
@@ -220,7 +203,6 @@ public class ProductGridView extends VerticalLayout {
     }
 
     private Div createProductCard(Product product) {
-        // Card container
         Div card = new Div();
         card.addClassName("product-card");
         card.setWidth("220px");
@@ -232,7 +214,6 @@ public class ProductGridView extends VerticalLayout {
                 .set("transition", "transform 0.2s, box-shadow 0.2s")
                 .set("cursor", "pointer");
 
-        // Hover effect
         card.getElement().addEventListener("mouseover", e -> card.getStyle()
                 .set("transform", "translateY(-5px)")
                 .set("box-shadow", "0 5px 15px rgba(0,0,0,0.2)"));
@@ -241,12 +222,10 @@ public class ProductGridView extends VerticalLayout {
                 .set("transform", "translateY(0)")
                 .set("box-shadow", "0 2px 5px rgba(0,0,0,0.1)"));
 
-        // Product image
         Image productImage = new Image();
         if (product.imageUrl() != null && !product.imageUrl().isEmpty()) {
             productImage.setSrc(product.imageUrl());
         } else {
-            // Default image if none provided
             productImage.setSrc("images/books.png");
         }
         productImage.setAlt(product.name());
@@ -254,7 +233,6 @@ public class ProductGridView extends VerticalLayout {
         productImage.setHeight("200px");
         productImage.getStyle().set("object-fit", "contain");
 
-        // Center the image
         Div imageContainer = new Div(productImage);
         imageContainer
                 .getStyle()
@@ -263,52 +241,39 @@ public class ProductGridView extends VerticalLayout {
                 .set("width", "100%")
                 .set("margin-bottom", "10px");
 
-        // Product title
         Span title = new Span(product.name());
         title.getStyle()
                 .set("font-weight", "bold")
                 .set("display", "block")
                 .set("margin", "8px 0")
                 .set("text-align", "center")
-                .set("height", "40px") // Altura fija para los títulos
-                .set("overflow", "hidden") // Ocultar el texto que desborde
-                .set("text-overflow", "ellipsis") // Mostrar puntos suspensivos
+                .set("height", "40px")
+                .set("overflow", "hidden")
+                .set("text-overflow", "ellipsis")
                 .set("display", "-webkit-box")
-                .set("-webkit-line-clamp", "2") // Limitar a 2 líneas
+                .set("-webkit-line-clamp", "2")
                 .set("-webkit-box-orient", "vertical");
 
-        // Add to cart button
         Button addButton = new Button("ADD");
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addButton.getStyle().set("display", "block").set("margin", "10px auto").set("padding", "5px 20px");
 
         nextButton.addClickListener(e -> {
             if (currentPage < totalPages - 1) {
-                // Incrementar la página antes de cargar los nuevos datos
                 currentPage++;
-
-                // Registro detallado antes de cargar
                 log.info("Navegando a la página siguiente: {}", currentPage);
-
-                // Limpiar el contenedor para indicar visualmente que se está cargando
                 booksContainer.removeAll();
-
-                // Cargar productos de la nueva página
                 UI.getCurrent().access(() -> {
                     loadProducts();
                 });
 
-                // Desplazar al inicio de la página
                 UI.getCurrent().getPage().executeJs("window.scrollTo(0, 0);");
             }
         });
 
-        // Add all components to the card
         card.add(imageContainer, title, addButton);
 
-        // Make the card clickable to view product details
         card.addClickListener(e -> {
-            // Navigate to product details page
             UI.getCurrent().navigate("product/" + product.code());
         });
 
