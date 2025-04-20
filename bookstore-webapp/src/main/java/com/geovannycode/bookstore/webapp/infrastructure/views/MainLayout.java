@@ -35,9 +35,7 @@ public class MainLayout extends AppLayout {
         headerLayout.setPadding(true);
         headerLayout.setSpacing(true);
 
-        headerLayout.addClassNames(
-                LumoUtility.Background.BASE,
-                LumoUtility.BoxShadow.SMALL);
+        headerLayout.addClassNames(LumoUtility.Background.BASE, LumoUtility.BoxShadow.SMALL);
 
         addToNavbar(headerLayout);
     }
@@ -57,5 +55,4 @@ public class MainLayout extends AppLayout {
 
         return nav;
     }
-
 }

@@ -35,12 +35,6 @@ public class ProductController {
         return result;
     }
 
-    /**
-     * Obtiene un producto por su código
-     * @param code Código del producto
-     * @return Producto encontrado
-     * @throws ResponseStatusException si el producto no se encuentra
-     */
     @GetMapping("/api/products/{code}")
     @ResponseBody
     public Product getProductByCode(@PathVariable("code") String code) {

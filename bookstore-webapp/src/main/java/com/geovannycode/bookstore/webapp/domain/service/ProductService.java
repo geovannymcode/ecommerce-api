@@ -4,7 +4,6 @@ import com.geovannycode.bookstore.webapp.domain.model.PagedResult;
 import com.geovannycode.bookstore.webapp.domain.model.Product;
 import com.geovannycode.bookstore.webapp.infrastructure.api.controller.ProductController;
 import java.util.Collections;
-import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,7 +35,7 @@ public class ProductService {
                     result.totalPages(),
                     result.totalElements());
 
-            // Verificar que el número de página solicitado coincida con el recibido
+
             if (result.pageNumber() != page) {
                 log.warn("La página solicitada ({}) no coincide con la recibida ({})", page, result.pageNumber());
             }
@@ -44,14 +43,12 @@ public class ProductService {
             return result;
         } catch (ResourceAccessException e) {
             log.error("Error de conexión al obtener productos para la página {}: {}", page, e.getMessage());
-            // Devolver un objeto PagedResult vacío en lugar de propagar la excepción
             return new PagedResult<>(Collections.emptyList(), 0, 0, 0, true, true, false, false);
         } catch (Exception e) {
             log.error("Error al obtener productos para la página {}: {}", page, e.getMessage(), e);
             throw e;
         }
     }
-
 
     public Product getProductByCode(String code) {
         try {

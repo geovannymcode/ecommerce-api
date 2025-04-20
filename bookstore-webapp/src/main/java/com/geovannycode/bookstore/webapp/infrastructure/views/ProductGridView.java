@@ -119,7 +119,6 @@ public class ProductGridView extends VerticalLayout {
                     result.isFirst(),
                     result.isLast());
 
-
             totalPages = result.totalPages();
             totalElements = result.totalElements();
             updatePaginationInfo();
