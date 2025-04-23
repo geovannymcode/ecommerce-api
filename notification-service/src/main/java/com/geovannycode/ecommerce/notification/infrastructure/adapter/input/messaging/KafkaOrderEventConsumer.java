@@ -61,10 +61,8 @@ public class KafkaOrderEventConsumer {
         try {
             log.info("Received OrderDeliveredEvent message");
 
-            // Usar el mapper para convertir el mensaje a un evento de dominio
             OrderDeliveredEvent event = kafkaEventMapper.mapToOrderDeliveredEvent(message);
 
-            // Verificar si ya hemos procesado este evento
             if (orderEventRepository.existsByEventId(event.getEventId())) {
                 log.warn("Received duplicate OrderDeliveredEvent with eventId: {}", event.getEventId());
                 return;
@@ -72,10 +70,8 @@ public class KafkaOrderEventConsumer {
 
             log.info("Processing OrderDeliveredEvent with orderNumber: {}", event.getOrderNumber());
 
-            // Enviar la notificación
             notificationService.sendOrderDeliveredNotification(event);
 
-            // Guardar el evento para evitar duplicados
             orderEventRepository.save(event.getEventId());
 
             log.info("Successfully processed OrderDeliveredEvent with orderNumber: {}", event.getOrderNumber());
@@ -90,10 +86,8 @@ public class KafkaOrderEventConsumer {
         try {
             log.info("Received OrderCancelledEvent message");
 
-            // Usar el mapper para convertir el mensaje a un evento de dominio
             OrderCancelledEvent event = kafkaEventMapper.mapToOrderCancelledEvent(message);
 
-            // Verificar si ya hemos procesado este evento
             if (orderEventRepository.existsByEventId(event.getEventId())) {
                 log.warn("Received duplicate OrderCancelledEvent with eventId: {}", event.getEventId());
                 return;
@@ -101,10 +95,8 @@ public class KafkaOrderEventConsumer {
 
             log.info("Processing OrderCancelledEvent with orderNumber: {}", event.getOrderNumber());
 
-            // Enviar la notificación
             notificationService.sendOrderCancelledNotification(event);
 
-            // Guardar el evento para evitar duplicados
             orderEventRepository.save(event.getEventId());
 
             log.info("Successfully processed OrderCancelledEvent with orderNumber: {}", event.getOrderNumber());
