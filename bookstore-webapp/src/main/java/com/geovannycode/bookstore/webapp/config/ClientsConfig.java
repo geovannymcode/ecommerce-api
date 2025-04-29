@@ -2,6 +2,7 @@ package com.geovannycode.bookstore.webapp.config;
 
 import com.geovannycode.bookstore.webapp.infrastructure.clients.cart.CartServiceClient;
 import com.geovannycode.bookstore.webapp.infrastructure.clients.catalog.CatalogServiceClient;
+import com.geovannycode.bookstore.webapp.infrastructure.clients.orders.OrderServiceClient;
 import com.geovannycode.bookstore.webapp.infrastructure.clients.payment.PaymentServiceClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,13 +42,11 @@ public class ClientsConfig {
         return factory.createClient(PaymentServiceClient.class);
     }
 
-    /*
-       @Bean
-       OrderServiceClient orderServiceClient() {
-           RestClient restClient = RestClient.create(properties.apiGatewayUrl());
-           HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
-                   .build();
-           return factory.createClient(OrderServiceClient.class);
-       }
-    */
+    @Bean
+    OrderServiceClient orderServiceClient() {
+        RestClient restClient = RestClient.create(properties.apiGatewayUrl());
+        HttpServiceProxyFactory factory = HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
+                .build();
+        return factory.createClient(OrderServiceClient.class);
+    }
 }
