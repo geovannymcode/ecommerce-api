@@ -3,6 +3,7 @@ package com.geovannycode.bookstore.webapp.domain.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public record OrderDTO(
         String orderNumber,

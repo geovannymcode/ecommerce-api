@@ -31,8 +31,15 @@ public class CartController {
     @GetMapping
     public ResponseEntity<Cart> getCart(@RequestParam(name = "cartId", required = false) String cartId) {
         log.info("Getting cart with cartId={}", cartId);
-        Cart cart = cartServiceClient.getCart(cartId);
-        return ResponseEntity.ok(cart);
+        try {
+            Cart cart = cartServiceClient.getCart(cartId);
+            log.info("Retrieved cart with ID: {}", cart != null ? cart.getId() : "null");
+            return ResponseEntity.ok(cart);
+        } catch (Exception e) {
+            log.error("Error getting cart: {}", e.getMessage(), e);
+            // Si no podemos obtener el carrito, creamos uno nuevo
+            return ResponseEntity.ok(new Cart());
+        }
     }
 
     @PostMapping
@@ -40,12 +47,20 @@ public class CartController {
             @RequestParam(name = "cartId", required = false) String cartId,
             @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
         log.info("Adding to cart with cartId={} and request={}", cartId, cartItemRequest);
-        return cartServiceClient.addToCart(cartId, cartItemRequest);
+        try {
+            Cart cart = cartServiceClient.addToCart(cartId, cartItemRequest);
+            log.info("Item added to cart. New cart ID: {}", cart.getId());
+            return cart;
+        } catch (Exception e) {
+            log.error("Error adding to cart: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     @PutMapping
     public Cart updateCartItemQuantity(
-            @RequestParam(name = "cartId") String cartId, @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
+            @RequestParam(name = "cartId") String cartId,
+            @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
         log.info("Updating cart item quantity with cartId={} and request={}", cartId, cartItemRequest);
         return cartServiceClient.updateCartItemQuantity(cartId, cartItemRequest);
     }

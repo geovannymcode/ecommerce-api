@@ -13,21 +13,21 @@ import org.springframework.data.redis.core.RedisHash;
 public class Cart {
 
     @Id
-    private String cartId;
+    private String id;
 
     private Set<CartItem> items = new HashSet<>();
 
     public Cart() {
-        this.cartId = UUID.randomUUID().toString();
+        this.id = UUID.randomUUID().toString();
         this.items = new HashSet<>();
     }
 
-    public Cart(String cartId) {
-        this.cartId = cartId;
+    public Cart(String id) {
+        this.id = id;
     }
 
     public Cart(String cartId, Set<CartItem> items) {
-        this.cartId = cartId;
+        this.id = id;
         this.items = items != null ? new HashSet<>(items) : new HashSet<>();
     }
 
@@ -75,11 +75,11 @@ public class Cart {
     }
 
     public String getId() {
-        return cartId;
+        return id;
     }
 
-    public void setId(String cartId) {
-        this.cartId = cartId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public Set<CartItem> getItems() {

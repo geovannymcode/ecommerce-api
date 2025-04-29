@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Cart {
-    private String cartId;
+    private String id;
     private Set<CartItem> items;
     private BigDecimal totalAmount;
 
@@ -13,13 +13,13 @@ public class Cart {
         this.items = new HashSet<>();
     }
 
-    public Cart(String cartId) {
-        this.cartId = cartId;
+    public Cart(String id) {
+        this.id = id;
         this.items = new HashSet<>();
     }
 
-    public Cart(String cartId, Set<CartItem> items) {
-        this.cartId = cartId;
+    public Cart(String id, Set<CartItem> items) {
+        this.id = id;
         this.items = items != null ? new HashSet<>(items) : new HashSet<>();
     }
 
@@ -29,12 +29,12 @@ public class Cart {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public String getCartId() {
-        return cartId;
+    public String getId() {
+        return id;
     }
 
-    public void setCartId(String cartId) {
-        this.cartId = cartId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public Set<CartItem> getItems() {

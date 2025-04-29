@@ -1,8 +1,12 @@
 package com.geovannycode.bookstore.webapp.infrastructure.views;
 
+import com.geovannycode.bookstore.webapp.domain.model.Cart;
+import com.geovannycode.bookstore.webapp.domain.model.CartItemRequestDTO;
 import com.geovannycode.bookstore.webapp.domain.model.PagedResult;
 import com.geovannycode.bookstore.webapp.domain.model.Product;
 import com.geovannycode.bookstore.webapp.domain.service.ProductService;
+import com.geovannycode.bookstore.webapp.infrastructure.api.controller.CartController;
+import com.geovannycode.bookstore.webapp.infrastructure.views.components.CartBadge;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -20,7 +24,10 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.ResourceAccessException;
+
+import java.util.Optional;
 
 @Route(value = "", layout = MainLayout.class)
 @RouteAlias(value = "products", layout = MainLayout.class)
@@ -29,6 +36,7 @@ public class ProductGridView extends VerticalLayout {
 
     private static final Logger log = LoggerFactory.getLogger(ProductGridView.class);
     private final ProductService productService;
+    private final CartController cartController;
     private final FlexLayout booksContainer;
     private final VerticalLayout errorView;
     private final HorizontalLayout paginationLayout;
@@ -38,13 +46,18 @@ public class ProductGridView extends VerticalLayout {
     private Long totalElements;
     private Button prevButton;
     private Button nextButton;
+    private String cartId;
 
-    public ProductGridView(ProductService productService) {
+    public ProductGridView(@Autowired ProductService productService, @Autowired CartController cartController) {
         this.productService = productService;
+        this.cartController = cartController;
 
         setPadding(true);
         setSpacing(true);
         setSizeFull();
+
+        // Get cart ID from session
+        cartId = getCartIdFromSession();
 
         booksContainer = new FlexLayout();
         booksContainer.setWidthFull();
@@ -257,25 +270,106 @@ public class ProductGridView extends VerticalLayout {
         addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         addButton.getStyle().set("display", "block").set("margin", "10px auto").set("padding", "5px 20px");
 
-        nextButton.addClickListener(e -> {
-            if (currentPage < totalPages - 1) {
-                currentPage++;
-                log.info("Navegando a la página siguiente: {}", currentPage);
-                booksContainer.removeAll();
-                UI.getCurrent().access(() -> {
-                    loadProducts();
-                });
+        // Corregido: Usamos una solución diferente para evitar propagación
+        // Creamos un wrapper para el botón que capturará el evento
+        Div buttonWrapper = new Div(addButton);
+        buttonWrapper.setWidthFull();
 
-                UI.getCurrent().getPage().executeJs("window.scrollTo(0, 0);");
-            }
+        // Añadimos el listener en el botón directamente usando un handler que no propague
+        addButton.addClickListener(event -> {
+            // Esto previene que el evento llegue al card
+            event.getSource().getElement().executeJs(
+                    "this.dispatchEvent(new CustomEvent('product-add-to-cart', {bubbles: false}))");
+
+            // Llamamos a addToCart directamente
+            addToCart(product);
         });
 
-        card.add(imageContainer, title, addButton);
+        card.add(imageContainer, title, buttonWrapper);
 
+        // La card navega al detalle
         card.addClickListener(e -> {
             UI.getCurrent().navigate("product/" + product.code());
         });
 
         return card;
+    }
+
+    private void addToCart(Product product) {
+        try {
+            if (product == null) {
+                Notification.show("No product to add to cart!", 3000, Notification.Position.BOTTOM_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
+            // Create request object
+            CartItemRequestDTO request = new CartItemRequestDTO();
+            request.setCode(product.code());
+            request.setQuantity(1);
+
+            // Call the cart controller
+            Cart cart = cartController.addToCart(cartId, request);
+
+            if (cart != null) {
+                // Get the updated cart ID if it's a new cart
+                if (cartId == null && cart.getId() != null) {
+                    cartId = cart.getId();
+                    storeCartIdInSession(cartId);
+                }
+
+                // Update the cart badge count in the main layout
+                updateCartBadge();
+
+                // Show success notification
+                Notification.show("Added to cart: " + product.name(), 3000, Notification.Position.BOTTOM_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } else {
+                // Show error notification
+                Notification.show("Failed to add to cart", 3000, Notification.Position.BOTTOM_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        } catch (Exception e) {
+            log.error("Error adding product to cart", e);
+            Notification.show("Error: " + e.getMessage(), 3000, Notification.Position.BOTTOM_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    private void updateCartBadge() {
+        try {
+            var cart = cartController.getCart(cartId).getBody();
+            if (cart != null && cart.getItems() != null) {
+                // Update cart badge in main layout
+                Optional<MainLayout> mainLayout = getParentLayout();
+                if (mainLayout.isPresent()) {
+                    CartBadge cartBadge = mainLayout.get().getCartBadge();
+                    cartBadge.updateCount(cart.getItems().size());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error updating cart badge", e);
+        }
+    }
+
+    private String getCartIdFromSession() {
+        // In a real application, this would retrieve the cart ID from session or cookies
+        // For now, using a simple UI session attribute
+        Object cartIdObj = UI.getCurrent().getSession().getAttribute("cartId");
+        return cartIdObj != null ? cartIdObj.toString() : null;
+    }
+
+    private void storeCartIdInSession(String cartId) {
+        // In a real application, this would store the cart ID in session or cookies
+        // For now, using a simple UI session attribute
+        UI.getCurrent().getSession().setAttribute("cartId", cartId);
+    }
+
+    private Optional<MainLayout> getParentLayout() {
+        return Optional.ofNullable(UI.getCurrent().getChildren()
+                .filter(component -> component instanceof MainLayout)
+                .findFirst()
+                .map(component -> (MainLayout) component)
+                .orElse(null));
     }
 }
