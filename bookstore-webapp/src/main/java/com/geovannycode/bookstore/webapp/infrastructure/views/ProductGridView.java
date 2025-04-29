@@ -22,12 +22,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.router.RouteAlias;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.client.ResourceAccessException;
-
-import java.util.Optional;
 
 @Route(value = "", layout = MainLayout.class)
 @RouteAlias(value = "products", layout = MainLayout.class)
@@ -278,8 +277,9 @@ public class ProductGridView extends VerticalLayout {
         // Añadimos el listener en el botón directamente usando un handler que no propague
         addButton.addClickListener(event -> {
             // Esto previene que el evento llegue al card
-            event.getSource().getElement().executeJs(
-                    "this.dispatchEvent(new CustomEvent('product-add-to-cart', {bubbles: false}))");
+            event.getSource()
+                    .getElement()
+                    .executeJs("this.dispatchEvent(new CustomEvent('product-add-to-cart', {bubbles: false}))");
 
             // Llamamos a addToCart directamente
             addToCart(product);
@@ -366,7 +366,8 @@ public class ProductGridView extends VerticalLayout {
     }
 
     private Optional<MainLayout> getParentLayout() {
-        return Optional.ofNullable(UI.getCurrent().getChildren()
+        return Optional.ofNullable(UI.getCurrent()
+                .getChildren()
                 .filter(component -> component instanceof MainLayout)
                 .findFirst()
                 .map(component -> (MainLayout) component)

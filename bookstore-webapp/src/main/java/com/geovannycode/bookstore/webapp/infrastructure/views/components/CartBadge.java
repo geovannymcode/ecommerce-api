@@ -1,11 +1,7 @@
 package com.geovannycode.bookstore.webapp.infrastructure.views.components;
 
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.shared.Registration;
 
 public class CartBadge extends Div {
 
@@ -13,9 +9,7 @@ public class CartBadge extends Div {
     private int itemCount = 0;
 
     public CartBadge() {
-        getStyle()
-                .set("cursor", "pointer")
-                .set("display", "inline-block");
+        getStyle().set("cursor", "pointer").set("display", "inline-block");
 
         cartText = new Span(formatCartText(itemCount));
         cartText.getStyle()
@@ -25,11 +19,11 @@ public class CartBadge extends Div {
                 .set("color", "var(--lumo-primary-text-color)")
                 .set("background-color", "var(--lumo-primary-color-10pct)");
 
-        getElement().addEventListener("mouseover", e ->
-                cartText.getStyle().set("background-color", "var(--lumo-primary-color-20pct)"));
+        getElement().addEventListener("mouseover", e -> cartText.getStyle()
+                .set("background-color", "var(--lumo-primary-color-20pct)"));
 
-        getElement().addEventListener("mouseout", e ->
-                cartText.getStyle().set("background-color", "var(--lumo-primary-color-10pct)"));
+        getElement().addEventListener("mouseout", e -> cartText.getStyle()
+                .set("background-color", "var(--lumo-primary-color-10pct)"));
 
         add(cartText);
     }

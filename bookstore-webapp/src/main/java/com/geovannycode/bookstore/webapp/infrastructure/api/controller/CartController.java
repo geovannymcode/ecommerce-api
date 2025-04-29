@@ -59,8 +59,7 @@ public class CartController {
 
     @PutMapping
     public Cart updateCartItemQuantity(
-            @RequestParam(name = "cartId") String cartId,
-            @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
+            @RequestParam(name = "cartId") String cartId, @RequestBody @Valid CartItemRequestDTO cartItemRequest) {
         log.info("Updating cart item quantity with cartId={} and request={}", cartId, cartItemRequest);
         return cartServiceClient.updateCartItemQuantity(cartId, cartItemRequest);
     }

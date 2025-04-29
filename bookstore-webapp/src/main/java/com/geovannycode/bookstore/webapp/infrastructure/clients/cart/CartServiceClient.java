@@ -22,13 +22,10 @@ public interface CartServiceClient {
 
     @PutExchange("/carts/api/carts")
     Cart updateCartItemQuantity(
-            @RequestParam(name = "cartId") String cartId,
-            @RequestBody CartItemRequestDTO cartItemRequest);
+            @RequestParam(name = "cartId") String cartId, @RequestBody CartItemRequestDTO cartItemRequest);
 
     @DeleteExchange("/carts/api/carts/items/{code}")
-    Cart removeCartItem(
-            @RequestParam(name = "cartId") String cartId,
-            @PathVariable("code") String code);
+    Cart removeCartItem(@RequestParam(name = "cartId") String cartId, @PathVariable("code") String code);
 
     @DeleteExchange("/carts/api/carts")
     void removeCart(@RequestParam(name = "cartId") String cartId);

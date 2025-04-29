@@ -24,11 +24,9 @@ import com.vaadin.flow.router.Route;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 
 @Route(value = "product", layout = MainLayout.class)
@@ -208,7 +206,8 @@ public class ProductDetailView extends VerticalLayout implements HasUrlParameter
     }
 
     private Optional<MainLayout> getParentLayout() {
-        return Optional.ofNullable(UI.getCurrent().getChildren()
+        return Optional.ofNullable(UI.getCurrent()
+                .getChildren()
                 .filter(component -> component instanceof MainLayout)
                 .findFirst()
                 .map(component -> (MainLayout) component)

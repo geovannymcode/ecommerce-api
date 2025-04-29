@@ -33,23 +33,20 @@ import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.binder.ValidationException;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.client.RestClientException;
-
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.client.RestClientException;
 
 @Route(value = "cart", layout = MainLayout.class)
 @PageTitle("Shopping Cart")
@@ -78,8 +75,7 @@ public class CartView extends VerticalLayout {
 
     private final Button placeOrderButton = new Button("Place Order");
 
-    public CartView(@Autowired CartController cartController,
-                    @Autowired OrderController orderController) {
+    public CartView(@Autowired CartController cartController, @Autowired OrderController orderController) {
         this.cartController = cartController;
         this.orderController = orderController;
 
@@ -92,11 +88,7 @@ public class CartView extends VerticalLayout {
 
         configureCartGrid();
 
-        VerticalLayout cartSection = new VerticalLayout(
-                viewTitle,
-                cartGrid,
-                createTotalSection()
-        );
+        VerticalLayout cartSection = new VerticalLayout(viewTitle, cartGrid, createTotalSection());
         cartSection.setPadding(false);
         cartSection.setSpacing(true);
 
@@ -104,8 +96,7 @@ public class CartView extends VerticalLayout {
                 createCustomerSection(),
                 createDeliveryAddressSection(),
                 createPaymentSection(),
-                createOrderButtonSection()
-        );
+                createOrderButtonSection());
         formSection.setPadding(false);
         formSection.setSpacing(true);
 
@@ -113,67 +104,74 @@ public class CartView extends VerticalLayout {
         formSection.setMaxWidth("1000px");
         formSection.getStyle().set("margin-inline", "auto");
 
-        //add(cartSection, new Hr(),formSection);
+        // add(cartSection, new Hr(),formSection);
         CardComponent cartCard = new CardComponent();
         cartCard.add(cartSection);
 
         CardComponent formCard = new CardComponent();
         formCard.add(formSection);
 
-        add(cartCard,new Hr(), formCard);
+        add(cartCard, new Hr(), formCard);
         // Load cart data
         loadCart();
     }
 
     private void configureCartGrid() {
         cartGrid.addColumn(CartItem::getCode).setHeader("Product Code").setAutoWidth(true);
-        cartGrid.addColumn(CartItem::getName).setHeader("Product").setAutoWidth(true).setFlexGrow(1);
-        cartGrid.addColumn(item -> formatCurrency(item.getPrice())).setHeader("Price").setAutoWidth(true);
+        cartGrid.addColumn(CartItem::getName)
+                .setHeader("Product")
+                .setAutoWidth(true)
+                .setFlexGrow(1);
+        cartGrid.addColumn(item -> formatCurrency(item.getPrice()))
+                .setHeader("Price")
+                .setAutoWidth(true);
 
         // Quantity column with editable field - CORRECCIÓN: eliminado setHasControls
         cartGrid.addColumn(new ComponentRenderer<>(item -> {
-            IntegerField quantityField = new IntegerField();
-            quantityField.setValue(item.getQuantity());
-            quantityField.setMin(1);
-            // Añadimos flechas para incrementar/decrementar dentro del campo
-            quantityField.setStepButtonsVisible(true);
-            quantityField.setWidth("100px");
+                    IntegerField quantityField = new IntegerField();
+                    quantityField.setValue(item.getQuantity());
+                    quantityField.setMin(1);
+                    // Añadimos flechas para incrementar/decrementar dentro del campo
+                    quantityField.setStepButtonsVisible(true);
+                    quantityField.setWidth("100px");
 
-            quantityField.addValueChangeListener(e -> {
-                if (e.getValue() != null && e.getValue() > 0) {
-                    updateItemQuantity(item.getCode(), e.getValue());
-                }
-            });
+                    quantityField.addValueChangeListener(e -> {
+                        if (e.getValue() != null && e.getValue() > 0) {
+                            updateItemQuantity(item.getCode(), e.getValue());
+                        }
+                    });
 
-            return quantityField;
-        })).setHeader("Quantity").setAutoWidth(true);
+                    return quantityField;
+                }))
+                .setHeader("Quantity")
+                .setAutoWidth(true);
 
         // Subtotal column
-        cartGrid.addColumn(CartItem::getSubTotal).setHeader("Subtotal")
+        cartGrid.addColumn(CartItem::getSubTotal)
+                .setHeader("Subtotal")
                 .setAutoWidth(true)
-                .setRenderer(new ComponentRenderer<>(item ->
-                        new Span(formatCurrency(item.getSubTotal()))
-                ));
+                .setRenderer(new ComponentRenderer<>(item -> new Span(formatCurrency(item.getSubTotal()))));
 
         // Actions column
         cartGrid.addColumn(new ComponentRenderer<>(item -> {
-            Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
-            removeButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-            removeButton.getElement().setAttribute("aria-label", "Remove item");
+                    Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
+                    removeButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+                    removeButton.getElement().setAttribute("aria-label", "Remove item");
 
-            removeButton.addClickListener(e -> removeItem(item.getCode()));
+                    removeButton.addClickListener(e -> removeItem(item.getCode()));
 
-            return removeButton;
-        })).setHeader("Actions").setAutoWidth(true);
+                    return removeButton;
+                }))
+                .setHeader("Actions")
+                .setAutoWidth(true);
 
         cartGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
-
 
         cartGrid.setHeight("350px");
         cartGrid.getStyle().set("overflow", "auto");
         cartGrid.setColumnReorderingAllowed(true);
         cartGrid.setWidthFull();
-        //cartGrid.setAllRowsVisible(true);
+        // cartGrid.setAllRowsVisible(true);
     }
 
     private HorizontalLayout createTotalSection() {
@@ -198,27 +196,18 @@ public class CartView extends VerticalLayout {
         H3 sectionTitle = new H3("Customer Information");
 
         FormLayout form = new FormLayout();
-        form.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2)
-        );
+        form.setResponsiveSteps(new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("500px", 2));
 
         TextField nameField = new TextField("Full Name");
         EmailField emailField = new EmailField("Email");
         TextField phoneField = new TextField("Phone");
 
         // Configure field validations and bindings
-        customerBinder.forField(nameField)
-                .asRequired("Name is required")
-                .bind(c -> c.name(), (c, v) -> {});
+        customerBinder.forField(nameField).asRequired("Name is required").bind(c -> c.name(), (c, v) -> {});
 
-        customerBinder.forField(emailField)
-                .asRequired("Email is required")
-                .bind(c -> c.email(), (c, v) -> {});
+        customerBinder.forField(emailField).asRequired("Email is required").bind(c -> c.email(), (c, v) -> {});
 
-        customerBinder.forField(phoneField)
-                .asRequired("Phone is required")
-                .bind(c -> c.phone(), (c, v) -> {});
+        customerBinder.forField(phoneField).asRequired("Phone is required").bind(c -> c.phone(), (c, v) -> {});
 
         // Add fields to form
         form.add(nameField, emailField, phoneField);
@@ -237,8 +226,7 @@ public class CartView extends VerticalLayout {
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2),
-                new FormLayout.ResponsiveStep("900px", 3)
-        );
+                new FormLayout.ResponsiveStep("900px", 3));
 
         TextField addressLine1Field = new TextField("Address Line 1");
         TextField addressLine2Field = new TextField("Address Line 2");
@@ -248,32 +236,23 @@ public class CartView extends VerticalLayout {
         TextField countryField = new TextField("Country");
 
         // Configure field validations and bindings
-        addressBinder.forField(addressLine1Field)
+        addressBinder
+                .forField(addressLine1Field)
                 .asRequired("Address is required")
                 .bind(a -> a.addressLine1(), (a, v) -> {});
 
-        addressBinder.forField(cityField)
-                .asRequired("City is required")
-                .bind(a -> a.city(), (a, v) -> {});
+        addressBinder.forField(cityField).asRequired("City is required").bind(a -> a.city(), (a, v) -> {});
 
-        addressBinder.forField(stateField)
-                .asRequired("State is required")
-                .bind(a -> a.state(), (a, v) -> {});
+        addressBinder.forField(stateField).asRequired("State is required").bind(a -> a.state(), (a, v) -> {});
 
-        addressBinder.forField(zipCodeField)
-                .asRequired("Zip code is required")
-                .bind(a -> a.zipCode(), (a, v) -> {});
+        addressBinder.forField(zipCodeField).asRequired("Zip code is required").bind(a -> a.zipCode(), (a, v) -> {});
 
-        addressBinder.forField(countryField)
-                .asRequired("Country is required")
-                .bind(a -> a.country(), (a, v) -> {});
+        addressBinder.forField(countryField).asRequired("Country is required").bind(a -> a.country(), (a, v) -> {});
 
-        addressBinder.forField(addressLine2Field)
-                .bind(a -> a.addressLine2(), (a, v) -> {});
+        addressBinder.forField(addressLine2Field).bind(a -> a.addressLine2(), (a, v) -> {});
 
         // Add fields to form
-        form.add(addressLine1Field, addressLine2Field, cityField,
-                stateField, zipCodeField, countryField);
+        form.add(addressLine1Field, addressLine2Field, cityField, stateField, zipCodeField, countryField);
 
         // Configure form layout - 2 columns
         form.setColspan(addressLine1Field, 2);
@@ -293,8 +272,7 @@ public class CartView extends VerticalLayout {
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2),
-                new FormLayout.ResponsiveStep("900px", 3)
-        );
+                new FormLayout.ResponsiveStep("900px", 3));
 
         TextField cardNumberField = new TextField("Card Number");
         cardNumberField.setValueChangeMode(ValueChangeMode.EAGER);
@@ -317,33 +295,37 @@ public class CartView extends VerticalLayout {
         cvvField.setMaxLength(4);
 
         // Configure field validations and bindings
-        paymentBinder.forField(cardNumberField)
+        paymentBinder
+                .forField(cardNumberField)
                 .asRequired("Card number is required")
                 .withValidator(value -> value.matches("[0-9]{13,19}"), "Invalid card number")
                 .bind(PaymentRequest::getCardNumber, PaymentRequest::setCardNumber);
 
-        paymentBinder.forField(cardHolderNameField)
+        paymentBinder
+                .forField(cardHolderNameField)
                 .asRequired("Cardholder name is required")
                 .bind(p -> "", (p, v) -> {});
 
-        paymentBinder.forField(expiryMonthField)
+        paymentBinder
+                .forField(expiryMonthField)
                 .asRequired("Expiration month is required")
                 .withValidator(month -> month >= 1 && month <= 12, "Month must be between 1-12")
                 .bind(PaymentRequest::getExpiryMonth, PaymentRequest::setExpiryMonth);
 
-        paymentBinder.forField(expiryYearField)
+        paymentBinder
+                .forField(expiryYearField)
                 .asRequired("Expiration year is required")
                 .withValidator(year -> year >= 2023 && year <= 2030, "Year must be between 2023-2030")
                 .bind(PaymentRequest::getExpiryYear, PaymentRequest::setExpiryYear);
 
-        paymentBinder.forField(cvvField)
+        paymentBinder
+                .forField(cvvField)
                 .asRequired("CVV is required")
                 .withValidator(cvv -> cvv.matches("[0-9]{3,4}"), "CVV must be 3-4 digits")
                 .bind(PaymentRequest::getCvv, PaymentRequest::setCvv);
 
         // Add fields to form
-        form.add(cardNumberField, cardHolderNameField,
-                expiryMonthField, expiryYearField, cvvField);
+        form.add(cardNumberField, cardHolderNameField, expiryMonthField, expiryYearField, cvvField);
 
         VerticalLayout layout = new VerticalLayout(sectionTitle, form);
         layout.setPadding(true);
@@ -490,14 +472,16 @@ public class CartView extends VerticalLayout {
 
             // Validar información del cliente
             if (!customerBinder.isValid()) {
-                Notification.show("Please fill in all required customer information", 3000, Notification.Position.MIDDLE)
+                Notification.show(
+                                "Please fill in all required customer information", 3000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
 
             // Validar dirección de envío
             if (!addressBinder.isValid()) {
-                Notification.show("Please fill in all required shipping information", 3000, Notification.Position.MIDDLE)
+                Notification.show(
+                                "Please fill in all required shipping information", 3000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
@@ -511,26 +495,61 @@ public class CartView extends VerticalLayout {
 
             // Convertir los elementos del carrito a OrderItems
             Set<OrderItem> orderItems = cart.getItems().stream()
-                    .map(item -> new OrderItem(
-                            item.getCode(),
-                            item.getName(),
-                            item.getPrice(),
-                            item.getQuantity()))
+                    .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                     .collect(Collectors.toSet());
 
             // Crear customer y address con valores reales de los campos
-            String customerName = customerBinder.getFields().findFirst().get().getValue().toString();
-            String customerEmail = ((EmailField)customerBinder.getFields().skip(1).findFirst().get()).getValue();
-            String customerPhone = customerBinder.getFields().skip(2).findFirst().get().getValue().toString();
+            String customerName =
+                    customerBinder.getFields().findFirst().get().getValue().toString();
+            String customerEmail =
+                    ((EmailField) customerBinder.getFields().skip(1).findFirst().get()).getValue();
+            String customerPhone = customerBinder
+                    .getFields()
+                    .skip(2)
+                    .findFirst()
+                    .get()
+                    .getValue()
+                    .toString();
 
             Customer customer = new Customer(customerName, customerEmail, customerPhone);
 
-            String addressLine1 = addressBinder.getFields().findFirst().get().getValue().toString();
-            String addressLine2 = addressBinder.getFields().skip(1).findFirst().get().getValue().toString();
-            String city = addressBinder.getFields().skip(2).findFirst().get().getValue().toString();
-            String state = addressBinder.getFields().skip(3).findFirst().get().getValue().toString();
-            String zipCode = addressBinder.getFields().skip(4).findFirst().get().getValue().toString();
-            String country = addressBinder.getFields().skip(5).findFirst().get().getValue().toString();
+            String addressLine1 =
+                    addressBinder.getFields().findFirst().get().getValue().toString();
+            String addressLine2 = addressBinder
+                    .getFields()
+                    .skip(1)
+                    .findFirst()
+                    .get()
+                    .getValue()
+                    .toString();
+            String city = addressBinder
+                    .getFields()
+                    .skip(2)
+                    .findFirst()
+                    .get()
+                    .getValue()
+                    .toString();
+            String state = addressBinder
+                    .getFields()
+                    .skip(3)
+                    .findFirst()
+                    .get()
+                    .getValue()
+                    .toString();
+            String zipCode = addressBinder
+                    .getFields()
+                    .skip(4)
+                    .findFirst()
+                    .get()
+                    .getValue()
+                    .toString();
+            String country = addressBinder
+                    .getFields()
+                    .skip(5)
+                    .findFirst()
+                    .get()
+                    .getValue()
+                    .toString();
 
             Address address = new Address(addressLine1, addressLine2, city, state, zipCode, country);
 
@@ -581,7 +600,8 @@ public class CartView extends VerticalLayout {
     }
 
     private Optional<MainLayout> getParentLayout() {
-        return Optional.ofNullable(UI.getCurrent().getChildren()
+        return Optional.ofNullable(UI.getCurrent()
+                .getChildren()
                 .filter(component -> component instanceof MainLayout)
                 .findFirst()
                 .map(component -> (MainLayout) component)
