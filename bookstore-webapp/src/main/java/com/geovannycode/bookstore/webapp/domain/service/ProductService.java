@@ -35,7 +35,6 @@ public class ProductService {
                     result.totalPages(),
                     result.totalElements());
 
-
             if (result.pageNumber() != page) {
                 log.warn("La página solicitada ({}) no coincide con la recibida ({})", page, result.pageNumber());
             }
