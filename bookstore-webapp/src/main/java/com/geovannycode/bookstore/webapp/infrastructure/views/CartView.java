@@ -9,13 +9,19 @@ import com.geovannycode.bookstore.webapp.domain.model.Customer;
 import com.geovannycode.bookstore.webapp.domain.model.OrderConfirmationDTO;
 import com.geovannycode.bookstore.webapp.domain.model.OrderItem;
 import com.geovannycode.bookstore.webapp.domain.model.PaymentRequest;
+import com.geovannycode.bookstore.webapp.domain.model.PaymentResponse;
+import com.geovannycode.bookstore.webapp.domain.model.enums.PaymentStatus;
 import com.geovannycode.bookstore.webapp.infrastructure.api.controller.CartController;
 import com.geovannycode.bookstore.webapp.infrastructure.api.controller.OrderController;
+import com.geovannycode.bookstore.webapp.infrastructure.api.controller.PaymentController;
 import com.geovannycode.bookstore.webapp.infrastructure.views.components.CardComponent;
 import com.geovannycode.bookstore.webapp.infrastructure.views.components.CartBadge;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
@@ -42,10 +48,13 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 
 @Route(value = "cart", layout = MainLayout.class)
@@ -56,6 +65,7 @@ public class CartView extends VerticalLayout {
 
     private final CartController cartController;
     private final OrderController orderController;
+    private final PaymentController paymentController; // Añadido el controlador de pagos
 
     private String cartId;
     private Cart cart;
@@ -75,9 +85,13 @@ public class CartView extends VerticalLayout {
 
     private final Button placeOrderButton = new Button("Place Order");
 
-    public CartView(@Autowired CartController cartController, @Autowired OrderController orderController) {
+    public CartView(
+            @Autowired CartController cartController,
+            @Autowired OrderController orderController,
+            @Autowired PaymentController paymentController) {
         this.cartController = cartController;
         this.orderController = orderController;
+        this.paymentController = paymentController;
 
         setSizeFull();
         setPadding(true);
@@ -126,7 +140,7 @@ public class CartView extends VerticalLayout {
                 .setHeader("Price")
                 .setAutoWidth(true);
 
-        // Quantity column with editable field - CORRECCIÓN: eliminado setHasControls
+        // Quantity column with editable field
         cartGrid.addColumn(new ComponentRenderer<>(item -> {
                     IntegerField quantityField = new IntegerField();
                     quantityField.setValue(item.getQuantity());
@@ -167,13 +181,47 @@ public class CartView extends VerticalLayout {
 
         cartGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
 
-        // Configuración inicial del grid
         cartGrid.setWidthFull();
         cartGrid.setColumnReorderingAllowed(true);
 
-        // Establecemos valores por defecto, pero se actualizarán dinámicamente
-        cartGrid.setHeight("350px");
-        cartGrid.getStyle().set("overflow", "auto");
+        // Configuramos la altura dinámica
+        updateGridHeight();
+    }
+
+    /**
+     * Actualiza la altura del grid del carrito según la cantidad de elementos.
+     * Para 5 elementos o menos, el grid mostrará todos los elementos sin desplazamiento.
+     * Para más de 5 elementos, el grid mantendrá una altura fija que muestra aproximadamente 5 elementos
+     * y habilitará el desplazamiento para el resto.
+     */
+    private void updateGridHeight() {
+        if (cart != null && cart.getItems() != null) {
+            int itemCount = cart.getItems().size();
+
+            // Hacer el grid visible
+            cartGrid.setVisible(true);
+
+            if (itemCount <= 5) {
+                // Para 5 elementos o menos, ajustar altura para mostrar todos sin scroll
+                // Aproximadamente 53px por fila (incluyendo cabecera) basado en el estilo por defecto de Vaadin
+                int gridHeight = (itemCount + 1) * 53; // +1 para la fila de cabecera
+                cartGrid.setHeight(gridHeight + "px");
+                cartGrid.getStyle().set("overflow", "hidden");
+
+                log.info("Carrito con {} elementos, altura ajustada a {}px sin scroll", itemCount, gridHeight);
+            } else {
+                // Para más de 5 elementos, fijar la altura para mostrar aproximadamente 5 elementos
+                // y habilitar el desplazamiento para el resto
+                int gridHeight = 6 * 53; // 5 elementos + 1 cabecera
+                cartGrid.setHeight(gridHeight + "px");
+                cartGrid.getStyle().set("overflow", "auto");
+
+                log.info("Carrito con {} elementos, altura fijada a {}px con scroll habilitado", itemCount, gridHeight);
+            }
+        } else {
+            // Si no hay carrito o está vacío, configuramos una altura mínima
+            cartGrid.setHeight("100px");
+        }
     }
 
     private HorizontalLayout createTotalSection() {
@@ -394,41 +442,8 @@ public class CartView extends VerticalLayout {
             totalPriceLabel.setText("Total: " + formatCurrency(cart.getTotalAmount()));
             placeOrderButton.setEnabled(true);
 
-            // Actualiza la altura del grid basado en el número de elementos
+            // Actualizamos la altura del grid
             updateGridHeight();
-        }
-    }
-
-    /**
-     * Actualiza la altura del grid del carrito según la cantidad de elementos.
-     * Para 5 elementos o menos, el grid mostrará todos los elementos sin desplazamiento.
-     * Para más de 5 elementos, el grid mantendrá una altura fija que muestra aproximadamente 5 elementos
-     * y habilitará el desplazamiento para el resto.
-     */
-    private void updateGridHeight() {
-        if (cart != null && cart.getItems() != null) {
-            int itemCount = cart.getItems().size();
-
-            // Hacer el grid visible
-            cartGrid.setVisible(true);
-
-            if (itemCount <= 5) {
-                // Para 5 elementos o menos, ajustar altura para mostrar todos sin scroll
-                // Aproximadamente 53px por fila (incluyendo cabecera) basado en el estilo por defecto de Vaadin
-                int gridHeight = (itemCount + 1) * 53; // +1 para la fila de cabecera
-                cartGrid.setHeight(gridHeight + "px");
-                cartGrid.getStyle().set("overflow", "hidden");
-
-                log.info("Carrito con {} elementos, altura ajustada a {}px sin scroll", itemCount, gridHeight);
-            } else {
-                // Para más de 5 elementos, fijar la altura para mostrar aproximadamente 5 elementos
-                // y habilitar el desplazamiento para el resto
-                int gridHeight = 6 * 53; // 5 elementos + 1 cabecera
-                cartGrid.setHeight(gridHeight + "px");
-                cartGrid.getStyle().set("overflow", "auto");
-
-                log.info("Carrito con {} elementos, altura fijada a {}px con scroll habilitado", itemCount, gridHeight);
-            }
         }
     }
 
@@ -500,95 +515,321 @@ public class CartView extends VerticalLayout {
         }
     }
 
+    // NUEVO MÉTODO DE PROCESAMIENTO DE ORDEN
     private void placeOrder() {
         try {
+            // Validar que el carrito no esté vacío
             if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
-                Notification.show("Cannot place order with empty cart", 3000, Notification.Position.MIDDLE)
+                Notification.show(
+                                "No se puede procesar la orden con un carrito vacío",
+                                3000,
+                                Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
                 return;
             }
 
+            log.info("Iniciando proceso de validación para completar la orden");
+
             // Validar información del cliente
             if (!customerBinder.isValid()) {
-                Notification.show(
-                                "Please fill in all required customer information", 3000, Notification.Position.MIDDLE)
+                // Mostrar errores específicos
+                StringBuilder errorMessage = new StringBuilder("Por favor complete la información del cliente:\n");
+                customerBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                        .append("- ")
+                        .append(error.getMessage())
+                        .append("\n"));
+
+                Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+                // Hacer scroll al formulario de cliente
+                UI.getCurrent()
+                        .getPage()
+                        .executeJs(
+                                "document.querySelector('h3:contains(\"Customer Information\")').scrollIntoView({behavior: 'smooth'})");
                 return;
             }
 
             // Validar dirección de envío
             if (!addressBinder.isValid()) {
-                Notification.show(
-                                "Please fill in all required shipping information", 3000, Notification.Position.MIDDLE)
+                // Mostrar errores específicos
+                StringBuilder errorMessage = new StringBuilder("Por favor complete la dirección de envío:\n");
+                addressBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                        .append("- ")
+                        .append(error.getMessage())
+                        .append("\n"));
+
+                Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+                // Hacer scroll al formulario de dirección
+                UI.getCurrent()
+                        .getPage()
+                        .executeJs(
+                                "document.querySelector('h3:contains(\"Delivery Address\")').scrollIntoView({behavior: 'smooth'})");
                 return;
             }
 
             // Validar información de pago
             if (!paymentBinder.isValid()) {
-                Notification.show("Please fill in all required payment information", 3000, Notification.Position.MIDDLE)
+                // Mostrar errores específicos
+                StringBuilder errorMessage = new StringBuilder("Por favor complete la información de pago:\n");
+                paymentBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                        .append("- ")
+                        .append(error.getMessage())
+                        .append("\n"));
+
+                Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+                // Hacer scroll al formulario de pago
+                UI.getCurrent()
+                        .getPage()
+                        .executeJs(
+                                "document.querySelector('h3:contains(\"Payment Details\")').scrollIntoView({behavior: 'smooth'})");
                 return;
             }
+
+            // Extraer los datos de pago para validar con el servicio de pagos
+            PaymentRequest paymentRequest = extractPaymentRequestFromForm();
+
+            // Validar el pago antes de procesar la orden
+            validatePaymentAndProceed(paymentRequest);
+
+        } catch (Exception e) {
+            log.error("Error al validar la orden", e);
+            Notification.show("Error al procesar la orden: " + e.getMessage(), 3000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    /**
+     * Valida el pago usando el servicio de pago y continúa con la confirmación
+     * si el pago es válido
+     */
+    private void validatePaymentAndProceed(PaymentRequest paymentRequest) {
+        try {
+            // Mostrar un indicador de carga mientras se valida el pago
+            placeOrderButton.setEnabled(false);
+            placeOrderButton.setText("Validando pago...");
+            placeOrderButton.setIcon(new Icon(VaadinIcon.SPINNER));
+
+            // Validar el pago mediante el servicio de pago
+            PaymentResponse paymentResponse = paymentController.validate(paymentRequest);
+
+            // Restaurar el botón
+            placeOrderButton.setEnabled(true);
+            placeOrderButton.setText("Place Order");
+            placeOrderButton.setIcon(null);
+
+            if (paymentResponse != null && paymentResponse.getStatus() == PaymentStatus.ACCEPTED) {
+                // Pago válido, mostrar confirmación
+                showOrderConfirmationDialog();
+            } else {
+                // Pago inválido, mostrar error
+                String errorMsg = "La información de pago no pudo ser validada";
+
+                Notification.show("Error de validación de pago: " + errorMsg, 5000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+                // Hacer scroll al formulario de pago
+                UI.getCurrent()
+                        .getPage()
+                        .executeJs(
+                                "document.querySelector('h3:contains(\"Payment Details\")').scrollIntoView({behavior: 'smooth'})");
+            }
+
+        } catch (HttpClientErrorException e) {
+            // Restaurar el botón
+            placeOrderButton.setEnabled(true);
+            placeOrderButton.setText("Place Order");
+            placeOrderButton.setIcon(null);
+
+            // Manejar diferentes tipos de errores HTTP
+            String errorMessage;
+            if (e.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                errorMessage = "Información de pago inválida";
+            } else if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                errorMessage = "No autorizado para procesar este pago";
+            } else {
+                errorMessage = "Error al validar el pago: " + e.getMessage();
+            }
+
+            log.error("Error en la validación del pago: {}", errorMessage, e);
+            Notification.show(errorMessage, 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+        } catch (Exception e) {
+            // Restaurar el botón
+            placeOrderButton.setEnabled(true);
+            placeOrderButton.setText("Place Order");
+            placeOrderButton.setIcon(null);
+
+            log.error("Error al validar el pago", e);
+            Notification.show("Error al validar el pago: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    /**
+     * Muestra el diálogo de confirmación antes de procesar la orden
+     */
+    private void showOrderConfirmationDialog() {
+        ConfirmDialog confirmDialog = new ConfirmDialog();
+        confirmDialog.setHeader("Confirmar orden");
+
+        // Construir un resumen de la orden para mostrar
+        StringBuilder orderSummary = new StringBuilder();
+        orderSummary
+                .append("Total: ")
+                .append(formatCurrency(cart.getTotalAmount()))
+                .append("\n");
+        orderSummary.append("Productos: ").append(cart.getItems().size()).append("\n");
+        orderSummary
+                .append("Envío a: ")
+                .append(extractAddressFromForm().city())
+                .append(", ")
+                .append(extractAddressFromForm().country());
+
+        confirmDialog.setText(orderSummary.toString());
+
+        confirmDialog.setCancelable(true);
+        confirmDialog.setCancelText("Cancelar");
+
+        confirmDialog.setConfirmText("Confirmar orden");
+        confirmDialog.setConfirmButtonTheme("primary success");
+
+        confirmDialog.addConfirmListener(event -> processOrder());
+
+        confirmDialog.open();
+    }
+
+    /**
+     * Procesa la orden con validación adicional y corrección de campos
+     * para evitar el error de país vacío
+     */
+    private void processOrder() {
+        try {
+            // Mostrar indicador de carga mientras se procesa la orden
+            UI.getCurrent().setPollInterval(500);
+            placeOrderButton.setEnabled(false);
+            placeOrderButton.setText("Procesando...");
+            placeOrderButton.setIcon(new Icon(VaadinIcon.SPINNER));
+            placeOrderButton.getStyle().set("cursor", "wait");
 
             // Convertir los elementos del carrito a OrderItems
             Set<OrderItem> orderItems = cart.getItems().stream()
                     .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                     .collect(Collectors.toSet());
 
-            // Crear customer y address con valores reales de los campos
-            String customerName =
-                    customerBinder.getFields().findFirst().get().getValue().toString();
-            String customerEmail =
-                    ((EmailField) customerBinder.getFields().skip(1).findFirst().get()).getValue();
-            String customerPhone = customerBinder
-                    .getFields()
-                    .skip(2)
-                    .findFirst()
-                    .get()
-                    .getValue()
-                    .toString();
+            // Crear customer con valores reales de los campos
+            Customer customer = extractCustomerFromForm();
 
-            Customer customer = new Customer(customerName, customerEmail, customerPhone);
+            // Obtener y verificar manualmente los campos de dirección para asegurar que sean correctos
+            // (Corrige el problema específico de zipCode y country invertidos)
+            String addressLine1 = "";
+            String addressLine2 = "";
+            String city = "";
+            String state = "";
+            String zipCode = "";
+            String country = "";
 
-            String addressLine1 =
-                    addressBinder.getFields().findFirst().get().getValue().toString();
-            String addressLine2 = addressBinder
-                    .getFields()
-                    .skip(1)
-                    .findFirst()
-                    .get()
-                    .getValue()
-                    .toString();
-            String city = addressBinder
-                    .getFields()
-                    .skip(2)
-                    .findFirst()
-                    .get()
-                    .getValue()
-                    .toString();
-            String state = addressBinder
-                    .getFields()
-                    .skip(3)
-                    .findFirst()
-                    .get()
-                    .getValue()
-                    .toString();
-            String zipCode = addressBinder
-                    .getFields()
-                    .skip(4)
-                    .findFirst()
-                    .get()
-                    .getValue()
-                    .toString();
-            String country = addressBinder
-                    .getFields()
-                    .skip(5)
-                    .findFirst()
-                    .get()
-                    .getValue()
-                    .toString();
+            // Recorrer todos los campos del binder para extraer sus valores por etiqueta
+            for (HasValue<?, ?> field : addressBinder.getFields().collect(Collectors.toList())) {
+                if (field instanceof TextField textField) {
+                    switch (textField.getLabel()) {
+                        case "Address Line 1":
+                            addressLine1 = textField.getValue();
+                            break;
+                        case "Address Line 2":
+                            addressLine2 = textField.getValue();
+                            break;
+                        case "City":
+                            city = textField.getValue();
+                            break;
+                        case "State":
+                            state = textField.getValue();
+                            break;
+                        case "Zip Code":
+                            zipCode = textField.getValue();
+                            break;
+                        case "Country":
+                            country = textField.getValue();
+                            break;
+                    }
+                }
+            }
 
+            // Verificar manualmente cada campo requerido
+            StringBuilder errors = new StringBuilder();
+            if (addressLine1.isEmpty()) {
+                errors.append("Address Line 1 is required\n");
+            }
+            if (city.isEmpty()) {
+                errors.append("City is required\n");
+            }
+            if (state.isEmpty()) {
+                errors.append("State is required\n");
+            }
+            if (zipCode.isEmpty()) {
+                errors.append("Zip Code is required\n");
+            }
+            if (country.isEmpty()) {
+                errors.append("Country is required\n");
+            }
+
+            if (errors.length() > 0) {
+                // Restaurar el botón
+                placeOrderButton.setEnabled(true);
+                placeOrderButton.setText("Place Order");
+                placeOrderButton.setIcon(null);
+                placeOrderButton.getStyle().remove("cursor");
+
+                // Mostrar errores
+                Notification.show(
+                                "Por favor complete todos los campos requeridos:\n" + errors,
+                                5000,
+                                Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+                UI.getCurrent().setPollInterval(-1);
+                return;
+            }
+
+            // Registrar los valores para depuración
+            log.info(
+                    "Dirección para crear orden - addressLine1: '{}', addressLine2: '{}', city: '{}', state: '{}', zipCode: '{}', country: '{}'",
+                    addressLine1,
+                    addressLine2,
+                    city,
+                    state,
+                    zipCode,
+                    country);
+
+            // Crear dirección con los valores validados
+            log.info(
+                    "⚠️ ATENCIÓN - VERIFICANDO CAMPOS FINALES: addressLine1='{}', addressLine2='{}', city='{}', state='{}', zipCode='{}', country='{}'",
+                    addressLine1,
+                    addressLine2,
+                    city,
+                    state,
+                    zipCode,
+                    country);
+
+            // Y si el campo country está vacío a pesar de que el usuario lo ingresó,
+            // puedes forzar un valor tomándolo directamente del campo en la UI:
+            if (country.isEmpty()) {
+                // Buscar el campo Country directamente
+                for (HasValue<?, ?> field : addressBinder.getFields().collect(Collectors.toList())) {
+                    if (field instanceof TextField textField && "Country".equals(textField.getLabel())) {
+                        country = textField.getValue();
+                        log.info("⚠️ Recuperando country directamente del campo UI: '{}'", country);
+                        break;
+                    }
+                }
+            }
+
+            // Finalmente crear el objeto Address con los valores correctos
             Address address = new Address(addressLine1, addressLine2, city, state, zipCode, country);
 
             // Crear la solicitud de orden
@@ -602,21 +843,383 @@ public class CartView extends VerticalLayout {
                 // Limpiar el carrito
                 clearCart();
 
+                // Mostrar notificación de éxito
+                Notification successNotification = Notification.show(
+                        "¡Orden procesada con éxito! Número de orden: " + confirmation.orderNumber(),
+                        5000,
+                        Notification.Position.MIDDLE);
+                successNotification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
                 // Navegar a la página de confirmación
                 UI.getCurrent().navigate("orders/" + confirmation.orderNumber());
-
-                Notification.show("Order placed successfully!", 3000, Notification.Position.MIDDLE)
-                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
             } else {
-                Notification.show("Failed to place order, please try again", 3000, Notification.Position.MIDDLE)
+                // Restaurar el botón
+                placeOrderButton.setEnabled(true);
+                placeOrderButton.setText("Place Order");
+                placeOrderButton.setIcon(null);
+                placeOrderButton.getStyle().remove("cursor");
+
+                Notification.show(
+                                "No se pudo procesar la orden, por favor intente nuevamente",
+                                3000,
+                                Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
+            UI.getCurrent().setPollInterval(-1);
 
         } catch (RestClientException e) {
-            log.error("Error placing order", e);
-            Notification.show("Failed to place order: " + e.getMessage(), 3000, Notification.Position.MIDDLE)
+            // Restaurar el botón
+            placeOrderButton.setEnabled(true);
+            placeOrderButton.setText("Place Order");
+            placeOrderButton.setIcon(null);
+            placeOrderButton.getStyle().remove("cursor");
+
+            log.error("Error al procesar la orden", e);
+
+            // Extraer el mensaje de error de la excepción
+            String errorMessage = e.getMessage();
+            if (errorMessage.contains("Country is required")) {
+                errorMessage =
+                        "El país es un campo obligatorio. Por favor complete todos los campos de dirección correctamente.";
+            }
+
+            Notification.show("Error al procesar la orden: " + errorMessage, 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+            UI.getCurrent().setPollInterval(-1);
+        } catch (Exception e) {
+            // Restaurar el botón
+            placeOrderButton.setEnabled(true);
+            placeOrderButton.setText("Place Order");
+            placeOrderButton.setIcon(null);
+            placeOrderButton.getStyle().remove("cursor");
+
+            log.error("Error inesperado al procesar la orden", e);
+            Notification.show("Error inesperado: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+            UI.getCurrent().setPollInterval(-1);
         }
+    }
+
+    /**
+     * Extrae la información del cliente del formulario
+     */
+    private Customer extractCustomerFromForm() {
+        String customerName = customerBinder
+                .getFields()
+                .findFirst()
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        String customerEmail = customerBinder
+                .getFields()
+                .skip(1)
+                .findFirst()
+                .filter(field -> field instanceof EmailField)
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        String customerPhone = customerBinder
+                .getFields()
+                .skip(2)
+                .findFirst()
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        return new Customer(customerName, customerEmail, customerPhone);
+    }
+
+    /**
+     * Extrae la dirección del formulario
+     */
+    private Address extractAddressFromForm() {
+        try {
+            // Extraer valores por etiqueta en lugar de por posición
+            String addressLine1 = "";
+            String addressLine2 = "";
+            String city = "";
+            String state = "";
+            String zipCode = "";
+            String country = "";
+
+            // Recorrer todos los campos del formulario para extraer valores por etiqueta
+            for (HasValue<?, ?> field : addressBinder.getFields().collect(Collectors.toList())) {
+                if (field instanceof TextField textField) {
+                    String label = textField.getLabel();
+                    String value = textField.getValue() != null ? textField.getValue() : "";
+
+                    switch (label) {
+                        case "Address Line 1":
+                            addressLine1 = value;
+                            break;
+                        case "Address Line 2":
+                            addressLine2 = value;
+                            break;
+                        case "City":
+                            city = value;
+                            break;
+                        case "State":
+                            state = value;
+                            break;
+                        case "Zip Code":
+                            zipCode = value;
+                            break;
+                        case "Country":
+                            country = value;
+                            break;
+                    }
+                }
+            }
+
+            // Log para diagnóstico
+            log.info(
+                    "Valores extraídos del formulario - addressLine1: '{}', addressLine2: '{}', city: '{}', state: '{}', zipCode: '{}', country: '{}'",
+                    addressLine1,
+                    addressLine2,
+                    city,
+                    state,
+                    zipCode,
+                    country);
+
+            // El método es llamado desde showOrderConfirmationDialog, donde solo necesitamos
+            // mostrar información, no validarla completamente
+            // Determinar si es llamado desde el diálogo de confirmación
+            boolean isCalledFromDialog = false;
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            for (StackTraceElement element : stackTrace) {
+                if (element.getMethodName().contains("showOrderConfirmationDialog")) {
+                    isCalledFromDialog = true;
+                    break;
+                }
+            }
+
+            if (isCalledFromDialog) {
+                // Para el diálogo solo necesitamos mostrar la información disponible
+                return new Address(addressLine1, addressLine2, city, state, zipCode, country);
+            } else {
+                // Para procesamiento real verificamos que todos los campos requeridos tengan valores
+                if (addressLine1.isEmpty()) {
+                    throw new IllegalArgumentException("Address Line 1 is required");
+                }
+                if (city.isEmpty()) {
+                    throw new IllegalArgumentException("City is required");
+                }
+                if (state.isEmpty()) {
+                    throw new IllegalArgumentException("State is required");
+                }
+                if (zipCode.isEmpty()) {
+                    throw new IllegalArgumentException("Zip Code is required");
+                }
+                if (country.isEmpty()) {
+                    throw new IllegalArgumentException("Country is required");
+                }
+
+                return new Address(addressLine1, addressLine2, city, state, zipCode, country);
+            }
+
+        } catch (Exception e) {
+            log.error("Error al extraer dirección del formulario", e);
+            // Si ocurre algún error, devolvemos una dirección vacía pero no lanzamos excepción
+            // para evitar bloquear el flujo del diálogo de confirmación
+            if (Thread.currentThread().getStackTrace()[2].getMethodName().contains("showOrderConfirmationDialog")) {
+                return new Address("", "", "", "", "", "");
+            } else {
+                throw e; // Re-lanzar la excepción si no es llamado desde el diálogo
+            }
+        }
+    }
+
+    /**
+     * Método alternativo para extraer la dirección que busca los campos por etiqueta
+     * en lugar de confiar en el orden de los campos
+     */
+    private Address extractAddressFromFormByLabel() {
+        // Helper function to find a field by its label
+        Function<String, Optional<HasValue<?, ?>>> findFieldByLabel = label -> addressBinder
+                .getFields()
+                .filter(field -> field instanceof HasValue && field instanceof Component)
+                .filter(field -> {
+                    if (field instanceof TextField textField) {
+                        return label.equals(textField.getLabel());
+                    }
+                    return false;
+                })
+                .findFirst();
+
+        // Get values from fields identified by their labels
+        String addressLine1 = findFieldByLabel
+                .apply("Address Line 1")
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        String addressLine2 = findFieldByLabel
+                .apply("Address Line 2")
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        String city = findFieldByLabel
+                .apply("City")
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        String state = findFieldByLabel
+                .apply("State")
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        String zipCode = findFieldByLabel
+                .apply("Zip Code")
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        String country = findFieldByLabel
+                .apply("Country")
+                .map(HasValue::getValue)
+                .map(Object::toString)
+                .orElse("");
+
+        // Log all extracted values for debugging
+        log.info(
+                "Dirección extraída del formulario - addressLine1: '{}', addressLine2: '{}', city: '{}', state: '{}', zipCode: '{}', country: '{}'",
+                addressLine1,
+                addressLine2,
+                city,
+                state,
+                zipCode,
+                country);
+
+        // Validación adicional para asegurar que los campos requeridos no estén vacíos
+        if (addressLine1.isEmpty()) {
+            throw new IllegalArgumentException("Address Line 1 is required");
+        }
+        if (city.isEmpty()) {
+            throw new IllegalArgumentException("City is required");
+        }
+        if (state.isEmpty()) {
+            throw new IllegalArgumentException("State is required");
+        }
+        if (zipCode.isEmpty()) {
+            throw new IllegalArgumentException("Zip Code is required");
+        }
+        if (country.isEmpty()) {
+            throw new IllegalArgumentException("Country is required");
+        }
+
+        return new Address(addressLine1, addressLine2, city, state, zipCode, country);
+    }
+
+    /**
+     * Método que extrae la dirección accediendo directamente a los campos del formulario
+     * Debe ser invocado dentro del método placeOrder() para asegurar que los campos estén disponibles
+     */
+    private Address extractAddressWithDirectAccess(FormLayout addressForm) {
+        // Encontrar los campos de dirección directamente del formulario
+        TextField addressLine1Field = (TextField) addressForm
+                .getChildren()
+                .filter(component ->
+                        component instanceof TextField && "Address Line 1".equals(((TextField) component).getLabel()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Address Line 1 field not found"));
+
+        TextField addressLine2Field = (TextField) addressForm
+                .getChildren()
+                .filter(component ->
+                        component instanceof TextField && "Address Line 2".equals(((TextField) component).getLabel()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Address Line 2 field not found"));
+
+        TextField cityField = (TextField) addressForm
+                .getChildren()
+                .filter(component ->
+                        component instanceof TextField && "City".equals(((TextField) component).getLabel()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("City field not found"));
+
+        TextField stateField = (TextField) addressForm
+                .getChildren()
+                .filter(component ->
+                        component instanceof TextField && "State".equals(((TextField) component).getLabel()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("State field not found"));
+
+        TextField zipCodeField = (TextField) addressForm
+                .getChildren()
+                .filter(component ->
+                        component instanceof TextField && "Zip Code".equals(((TextField) component).getLabel()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Zip Code field not found"));
+
+        TextField countryField = (TextField) addressForm
+                .getChildren()
+                .filter(component ->
+                        component instanceof TextField && "Country".equals(((TextField) component).getLabel()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Country field not found"));
+
+        // Obtener los valores de los campos
+        String addressLine1 = addressLine1Field.getValue();
+        String addressLine2 = addressLine2Field.getValue();
+        String city = cityField.getValue();
+        String state = stateField.getValue();
+        String zipCode = zipCodeField.getValue();
+        String country = countryField.getValue();
+
+        // Registrar los valores para depuración
+        log.info(
+                "Dirección extraída por acceso directo - addressLine1: '{}', addressLine2: '{}', city: '{}', state: '{}', zipCode: '{}', country: '{}'",
+                addressLine1,
+                addressLine2,
+                city,
+                state,
+                zipCode,
+                country);
+
+        return new Address(addressLine1, addressLine2, city, state, zipCode, country);
+    }
+
+    /**
+     * Extrae los datos de pago del formulario
+     */
+    private PaymentRequest extractPaymentRequestFromForm() {
+        PaymentRequest request = new PaymentRequest();
+
+        // Capturar el número de tarjeta
+        paymentBinder
+                .getFields()
+                .findFirst()
+                .ifPresent(field -> request.setCardNumber(field.getValue().toString()));
+
+        // Capturar el mes de expiración
+        paymentBinder.getFields().skip(2).findFirst().ifPresent(field -> {
+            if (field.getValue() != null) {
+                request.setExpiryMonth((Integer) field.getValue());
+            }
+        });
+
+        // Capturar el año de expiración
+        paymentBinder.getFields().skip(3).findFirst().ifPresent(field -> {
+            if (field.getValue() != null) {
+                request.setExpiryYear((Integer) field.getValue());
+            }
+        });
+
+        // Capturar el CVV
+        paymentBinder
+                .getFields()
+                .skip(4)
+                .findFirst()
+                .ifPresent(field -> request.setCvv(field.getValue().toString()));
+
+        return request;
     }
 
     private String formatCurrency(BigDecimal amount) {

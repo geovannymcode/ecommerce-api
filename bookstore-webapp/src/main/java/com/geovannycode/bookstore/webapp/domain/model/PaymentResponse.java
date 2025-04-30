@@ -1,4 +1,4 @@
-package com.geovannycode.bookstore.webapp.domain;
+package com.geovannycode.bookstore.webapp.domain.model;
 
 import com.geovannycode.bookstore.webapp.domain.model.enums.PaymentStatus;
 

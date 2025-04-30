@@ -1,7 +1,7 @@
 package com.geovannycode.bookstore.webapp.infrastructure.api.controller;
 
-import com.geovannycode.bookstore.webapp.domain.PaymentResponse;
 import com.geovannycode.bookstore.webapp.domain.model.PaymentRequest;
+import com.geovannycode.bookstore.webapp.domain.model.PaymentResponse;
 import com.geovannycode.bookstore.webapp.infrastructure.clients.payment.PaymentServiceClient;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;

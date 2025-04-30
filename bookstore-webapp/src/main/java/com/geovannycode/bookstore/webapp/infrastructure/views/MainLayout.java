@@ -98,7 +98,7 @@ public class MainLayout extends AppLayout {
 
         nav.addItem(new SideNavItem("Productos", ProductGridView.class, VaadinIcon.PACKAGE.create()));
         nav.addItem(new SideNavItem("Carrito", CartView.class, VaadinIcon.CART.create()));
-
+        nav.addItem(new SideNavItem("Mis Órdenes", OrderListView.class, VaadinIcon.CLIPBOARD_TEXT.create()));
         return nav;
     }
 

@@ -2,5 +2,7 @@ package com.geovannycode.bookstore.webapp.domain.model.enums;
 
 public enum PaymentStatus {
     ACCEPTED,
-    REJECTED
+    REJECTED,
+    PENDING,
+    ERROR
 }
