@@ -167,11 +167,13 @@ public class CartView extends VerticalLayout {
 
         cartGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
 
+        // Configuración inicial del grid
+        cartGrid.setWidthFull();
+        cartGrid.setColumnReorderingAllowed(true);
+
+        // Establecemos valores por defecto, pero se actualizarán dinámicamente
         cartGrid.setHeight("350px");
         cartGrid.getStyle().set("overflow", "auto");
-        cartGrid.setColumnReorderingAllowed(true);
-        cartGrid.setWidthFull();
-        // cartGrid.setAllRowsVisible(true);
     }
 
     private HorizontalLayout createTotalSection() {
@@ -391,6 +393,42 @@ public class CartView extends VerticalLayout {
             cartGrid.setItems(cart.getItems());
             totalPriceLabel.setText("Total: " + formatCurrency(cart.getTotalAmount()));
             placeOrderButton.setEnabled(true);
+
+            // Actualiza la altura del grid basado en el número de elementos
+            updateGridHeight();
+        }
+    }
+
+    /**
+     * Actualiza la altura del grid del carrito según la cantidad de elementos.
+     * Para 5 elementos o menos, el grid mostrará todos los elementos sin desplazamiento.
+     * Para más de 5 elementos, el grid mantendrá una altura fija que muestra aproximadamente 5 elementos
+     * y habilitará el desplazamiento para el resto.
+     */
+    private void updateGridHeight() {
+        if (cart != null && cart.getItems() != null) {
+            int itemCount = cart.getItems().size();
+
+            // Hacer el grid visible
+            cartGrid.setVisible(true);
+
+            if (itemCount <= 5) {
+                // Para 5 elementos o menos, ajustar altura para mostrar todos sin scroll
+                // Aproximadamente 53px por fila (incluyendo cabecera) basado en el estilo por defecto de Vaadin
+                int gridHeight = (itemCount + 1) * 53; // +1 para la fila de cabecera
+                cartGrid.setHeight(gridHeight + "px");
+                cartGrid.getStyle().set("overflow", "hidden");
+
+                log.info("Carrito con {} elementos, altura ajustada a {}px sin scroll", itemCount, gridHeight);
+            } else {
+                // Para más de 5 elementos, fijar la altura para mostrar aproximadamente 5 elementos
+                // y habilitar el desplazamiento para el resto
+                int gridHeight = 6 * 53; // 5 elementos + 1 cabecera
+                cartGrid.setHeight(gridHeight + "px");
+                cartGrid.getStyle().set("overflow", "auto");
+
+                log.info("Carrito con {} elementos, altura fijada a {}px con scroll habilitado", itemCount, gridHeight);
+            }
         }
     }
 
