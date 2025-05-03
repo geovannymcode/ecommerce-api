@@ -44,7 +44,8 @@ public class CartView extends VerticalLayout {
 
     private final VerticalLayout cartListLayout = new VerticalLayout();
     private final Span subtotalLabel = new Span("Subtotal (0 productos): $0.00");
-    private final Span totalLabel = new Span("Total: $0.00");
+    // private final Span totalLabel = new Span("Total: $0.00");
+    private final Span bottomTotalLabel = new Span("Total: ");
 
     public CartView(@Autowired CartController cartController) {
         this.cartController = cartController;
@@ -61,6 +62,22 @@ public class CartView extends VerticalLayout {
         cartLayout.setPadding(false);
         cartLayout.setSpacing(true);
         cartLayout.setWidthFull();
+
+        // Create bottom total layout
+        HorizontalLayout bottomTotalLayout = new HorizontalLayout();
+        bottomTotalLayout.setWidthFull();
+        bottomTotalLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+        bottomTotalLayout.add(bottomTotalLabel);
+        bottomTotalLabel
+                .getStyle()
+                .set("font-size", "18px")
+                .set("font-weight", "bold")
+                // .set("color", "#B12704")
+                .set("margin-right", "20px")
+                .set("margin-top", "20px");
+
+        // Add bottom total to cart layout
+        cartLayout.add(bottomTotalLayout);
 
         // Create the right sidebar with subtotal and checkout button
         VerticalLayout sidebarLayout = createSidebarLayout();
@@ -118,15 +135,14 @@ public class CartView extends VerticalLayout {
                 .set("white-space", "nowrap");
 
         // Total label (moved to sidebar) - estilo Amazon
-        totalLabel
-                .getStyle()
-                .set("font-size", "16px")
-                .set("font-weight", "bold")
-                .set("margin-bottom", "20px")
-                .set("padding", "10px 0")
-                .set("border-top", "1px solid #DDD")
-                .set("border-bottom", "1px solid #DDD");
-
+        /*totalLabel.getStyle()
+                        .set("font-size", "16px")
+                        .set("font-weight", "bold")
+                        .set("margin-bottom", "20px")
+                        .set("padding", "10px 0")
+                        .set("border-top", "1px solid #DDD")
+                        .set("border-bottom", "1px solid #DDD");
+        */
         // Checkout button
         Button proceedToCheckoutButton = new Button("Proceed to Checkout");
         proceedToCheckoutButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -142,7 +158,7 @@ public class CartView extends VerticalLayout {
         proceedToCheckoutButton.setIconAfterText(true);
         proceedToCheckoutButton.addClickListener(e -> UI.getCurrent().navigate(CheckoutView.class));
 
-        VerticalLayout layout = new VerticalLayout(subtotalLabel, totalLabel, proceedToCheckoutButton);
+        VerticalLayout layout = new VerticalLayout(subtotalLabel, /*totalLabel,*/ proceedToCheckoutButton);
         layout.setPadding(false);
         layout.setSpacing(false); // Para que los elementos estén más juntos como en Amazon
 
@@ -298,13 +314,14 @@ public class CartView extends VerticalLayout {
                 .map(item -> item.getPrice().multiply(new java.math.BigDecimal(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Update subtotal and total labels
+        // Update subtotal, total and bottom total labels
         int itemCount = cart.getItems().size();
         String itemCountText = itemCount == 1 ? "1 producto" : itemCount + " productos";
 
         // Formato exacto como en Amazon
         subtotalLabel.setText("Subtotal (" + itemCount + " productos): $" + total);
-        totalLabel.setText("Total: $" + total);
+        // totalLabel.setText("Total: $" + total);
+        bottomTotalLabel.setText("Total: $" + total);
     }
 
     private void showEmptyCartMessage() {
@@ -319,7 +336,8 @@ public class CartView extends VerticalLayout {
 
         cartListLayout.add(emptyMessage);
         subtotalLabel.setText("Subtotal (0 productos): $0.00");
-        totalLabel.setText("Total: $0.00");
+        // totalLabel.setText("Total: $0.00");
+        bottomTotalLabel.setText("Total: $0.00");
 
         Notification.show("Your cart is empty. Continue shopping to add items.", 3000, Notification.Position.MIDDLE);
     }
