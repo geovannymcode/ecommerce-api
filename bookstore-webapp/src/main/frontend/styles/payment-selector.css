@@ -1,0 +1,86 @@
+/* Estilos para el selector de métodos de pago */
+.payment-selector {
+    margin: 0;
+    padding: 1rem;
+}
+
+/* Contenedor de opciones de pago */
+.payment-options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+/* Tarjeta de opción de pago */
+.payment-option {
+    position: relative;
+    width: 180px;
+    height: 120px;
+    border: 1px solid var(--lumo-contrast-20pct);
+    border-radius: var(--lumo-border-radius-m);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: var(--lumo-base-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--lumo-box-shadow-xs);
+}
+
+.payment-option:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--lumo-box-shadow-s);
+    border-color: var(--lumo-contrast-30pct);
+}
+
+.payment-option.selected {
+    border-color: var(--lumo-primary-color);
+    border-width: 2px;
+    background-color: var(--lumo-primary-color-10pct);
+}
+
+/* Logo de método de pago */
+.payment-logo {
+    max-width: 80px;
+    max-height: 40px;
+    margin-bottom: 0.5rem;
+}
+
+/* Título del método de pago */
+.payment-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--lumo-secondary-text-color);
+}
+
+.payment-option.selected .payment-title {
+    color: var(--lumo-primary-text-color);
+}
+
+/* Descripción del método de pago */
+.payment-description {
+    font-size: var(--lumo-font-size-xs);
+    text-align: center;
+    color: var(--lumo-tertiary-text-color);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Estilos responsivos */
+@media (max-width: 600px) {
+    .payment-options-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .payment-option {
+        width: 100%;
+        max-width: 300px;
+    }
+}

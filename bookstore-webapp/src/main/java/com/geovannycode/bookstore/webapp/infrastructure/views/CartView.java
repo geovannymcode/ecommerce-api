@@ -387,7 +387,8 @@ public class CartView extends VerticalLayout {
     private HorizontalLayout createOrderButtonSection() {
         placeOrderButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         placeOrderButton.getStyle().set("margin-top", "20px");
-        placeOrderButton.addClickListener(e -> placeOrder());
+        //placeOrderButton.addClickListener(e -> placeOrder());
+        placeOrderButton.addClickListener(e -> UI.getCurrent().navigate(CheckoutView.class));
 
         HorizontalLayout layout = new HorizontalLayout(placeOrderButton);
         layout.setJustifyContentMode(JustifyContentMode.END);
