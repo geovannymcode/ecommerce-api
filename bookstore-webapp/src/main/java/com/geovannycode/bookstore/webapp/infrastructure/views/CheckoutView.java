@@ -2,8 +2,8 @@ package com.geovannycode.bookstore.webapp.infrastructure.views;
 
 import com.geovannycode.bookstore.webapp.domain.model.Address;
 import com.geovannycode.bookstore.webapp.domain.model.Cart;
-import com.geovannycode.bookstore.webapp.domain.model.Customer;
 import com.geovannycode.bookstore.webapp.domain.model.CreateOrderRequest;
+import com.geovannycode.bookstore.webapp.domain.model.Customer;
 import com.geovannycode.bookstore.webapp.domain.model.OrderConfirmationDTO;
 import com.geovannycode.bookstore.webapp.domain.model.OrderItem;
 import com.geovannycode.bookstore.webapp.infrastructure.api.controller.CartController;
@@ -31,16 +31,15 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Route(value = "checkout", layout = MainLayout.class)
 @PageTitle("Finalizar Compra")
@@ -193,9 +192,7 @@ public class CheckoutView extends VerticalLayout {
         // Formulario para información del cliente
         FormLayout customerForm = new FormLayout();
         customerForm.setResponsiveSteps(
-                new FormLayout.ResponsiveStep("0", 1),
-                new FormLayout.ResponsiveStep("500px", 2)
-        );
+                new FormLayout.ResponsiveStep("0", 1), new FormLayout.ResponsiveStep("500px", 2));
 
         TextField nameField = new TextField("Nombre Completo");
         nameField.setRequired(true);
@@ -207,15 +204,12 @@ public class CheckoutView extends VerticalLayout {
         phoneField.setRequired(true);
 
         // Configurar validaciones y bindings
-        customerBinder.forField(nameField)
-                .asRequired("El nombre es requerido")
-                .bind(Customer::name, (c, v) -> {});
+        customerBinder.forField(nameField).asRequired("El nombre es requerido").bind(Customer::name, (c, v) -> {});
 
-        customerBinder.forField(emailField)
-                .asRequired("El email es requerido")
-                .bind(Customer::email, (c, v) -> {});
+        customerBinder.forField(emailField).asRequired("El email es requerido").bind(Customer::email, (c, v) -> {});
 
-        customerBinder.forField(phoneField)
+        customerBinder
+                .forField(phoneField)
                 .asRequired("El teléfono es requerido")
                 .bind(Customer::phone, (c, v) -> {});
 
@@ -241,8 +235,7 @@ public class CheckoutView extends VerticalLayout {
         addressForm.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2),
-                new FormLayout.ResponsiveStep("900px", 3)
-        );
+                new FormLayout.ResponsiveStep("900px", 3));
 
         TextField addressLine1Field = new TextField("Dirección");
         addressLine1Field.setRequired(true);
@@ -262,28 +255,26 @@ public class CheckoutView extends VerticalLayout {
         countryField.setRequired(true);
 
         // Configurar validaciones y bindings
-        addressBinder.forField(addressLine1Field)
+        addressBinder
+                .forField(addressLine1Field)
                 .asRequired("La dirección es requerida")
                 .bind(Address::addressLine1, (a, v) -> {});
 
-        addressBinder.forField(cityField)
-                .asRequired("La ciudad es requerida")
-                .bind(Address::city, (a, v) -> {});
+        addressBinder.forField(cityField).asRequired("La ciudad es requerida").bind(Address::city, (a, v) -> {});
 
-        addressBinder.forField(stateField)
+        addressBinder
+                .forField(stateField)
                 .asRequired("El estado/provincia es requerido")
                 .bind(Address::state, (a, v) -> {});
 
-        addressBinder.forField(zipCodeField)
+        addressBinder
+                .forField(zipCodeField)
                 .asRequired("El código postal es requerido")
                 .bind(Address::zipCode, (a, v) -> {});
 
-        addressBinder.forField(countryField)
-                .asRequired("El país es requerido")
-                .bind(Address::country, (a, v) -> {});
+        addressBinder.forField(countryField).asRequired("El país es requerido").bind(Address::country, (a, v) -> {});
 
-        addressBinder.forField(addressLine2Field)
-                .bind(Address::addressLine2, (a, v) -> {});
+        addressBinder.forField(addressLine2Field).bind(Address::addressLine2, (a, v) -> {});
 
         addressForm.add(addressLine1Field, addressLine2Field, cityField, stateField, zipCodeField, countryField);
 
@@ -332,7 +323,8 @@ public class CheckoutView extends VerticalLayout {
      */
     private Div createOrderSummary() {
         Div summaryContainer = new Div();
-        summaryContainer.getStyle()
+        summaryContainer
+                .getStyle()
                 .set("margin-top", "2rem")
                 .set("padding", "1rem")
                 .set("border", "1px solid var(--lumo-contrast-10pct)")
@@ -422,10 +414,10 @@ public class CheckoutView extends VerticalLayout {
             case 0: // Información del cliente
                 if (!customerBinder.isValid()) {
                     Notification.show(
-                            "Por favor completa la información del cliente correctamente",
-                            3000,
-                            Notification.Position.MIDDLE
-                    ).addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                    "Por favor completa la información del cliente correctamente",
+                                    3000,
+                                    Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
                     return false;
                 }
                 return true;
@@ -433,21 +425,18 @@ public class CheckoutView extends VerticalLayout {
             case 1: // Dirección de entrega
                 if (!addressBinder.isValid()) {
                     Notification.show(
-                            "Por favor completa la dirección de entrega correctamente",
-                            3000,
-                            Notification.Position.MIDDLE
-                    ).addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                    "Por favor completa la dirección de entrega correctamente",
+                                    3000,
+                                    Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
                     return false;
                 }
                 return true;
 
             case 2: // Método de pago
                 if (selectedPaymentMethod == null) {
-                    Notification.show(
-                            "Por favor selecciona un método de pago",
-                            3000,
-                            Notification.Position.MIDDLE
-                    ).addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    Notification.show("Por favor selecciona un método de pago", 3000, Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
                     return false;
                 }
                 return true;
@@ -492,26 +481,18 @@ public class CheckoutView extends VerticalLayout {
                     Notification.show(
                             "El carrito está vacío. Añade productos para continuar.",
                             3000,
-                            Notification.Position.MIDDLE
-                    );
+                            Notification.Position.MIDDLE);
                     UI.getCurrent().navigate(ProductGridView.class);
                 }
             } else {
                 // No hay carrito, redirigir a la vista de productos
-                Notification.show(
-                        "No se encontró un carrito activo.",
-                        3000,
-                        Notification.Position.MIDDLE
-                );
+                Notification.show("No se encontró un carrito activo.", 3000, Notification.Position.MIDDLE);
                 UI.getCurrent().navigate(ProductGridView.class);
             }
         } catch (Exception e) {
             log.error("Error al cargar el carrito", e);
-            Notification.show(
-                    "Error al cargar el carrito: " + e.getMessage(),
-                    3000,
-                    Notification.Position.MIDDLE
-            ).addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Notification.show("Error al cargar el carrito: " + e.getMessage(), 3000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
             UI.getCurrent().navigate(ProductGridView.class);
         }
     }
@@ -525,11 +506,8 @@ public class CheckoutView extends VerticalLayout {
             showConfirmationDialog();
         } catch (Exception e) {
             log.error("Error al procesar la orden", e);
-            Notification.show(
-                    "Error al procesar la orden: " + e.getMessage(),
-                    5000,
-                    Notification.Position.MIDDLE
-            ).addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Notification.show("Error al procesar la orden: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
@@ -577,20 +555,11 @@ public class CheckoutView extends VerticalLayout {
 
             // Convertir items del carrito a items de orden
             Set<OrderItem> orderItems = cart.getItems().stream()
-                    .map(item -> new OrderItem(
-                            item.getCode(),
-                            item.getName(),
-                            item.getPrice(),
-                            item.getQuantity()
-                    ))
+                    .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                     .collect(Collectors.toSet());
 
             // Crear solicitud de orden
-            CreateOrderRequest orderRequest = new CreateOrderRequest(
-                    orderItems,
-                    customer,
-                    address
-            );
+            CreateOrderRequest orderRequest = new CreateOrderRequest(orderItems, customer, address);
 
             // Enviar solicitud al controlador
             OrderConfirmationDTO confirmation = orderController.createOrder(orderRequest);
@@ -603,8 +572,7 @@ public class CheckoutView extends VerticalLayout {
                 Notification notification = Notification.show(
                         "¡Orden procesada con éxito! Número de orden: " + confirmation.orderNumber(),
                         5000,
-                        Notification.Position.MIDDLE
-                );
+                        Notification.Position.MIDDLE);
                 notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
                 // Navegar a la vista de confirmación
@@ -616,10 +584,10 @@ public class CheckoutView extends VerticalLayout {
                 nextButton.setText("Finalizar Compra");
 
                 Notification.show(
-                        "No se pudo procesar la orden, por favor intenta nuevamente",
-                        3000,
-                        Notification.Position.MIDDLE
-                ).addThemeVariants(NotificationVariant.LUMO_ERROR);
+                                "No se pudo procesar la orden, por favor intenta nuevamente",
+                                3000,
+                                Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
         } catch (Exception e) {
             log.error("Error al finalizar la orden", e);
@@ -629,11 +597,8 @@ public class CheckoutView extends VerticalLayout {
             nextButton.setEnabled(true);
             nextButton.setText("Finalizar Compra");
 
-            Notification.show(
-                    "Error al procesar la orden: " + e.getMessage(),
-                    5000,
-                    Notification.Position.MIDDLE
-            ).addThemeVariants(NotificationVariant.LUMO_ERROR);
+            Notification.show("Error al procesar la orden: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
 
@@ -645,8 +610,10 @@ public class CheckoutView extends VerticalLayout {
     private Customer extractCustomerData() {
         // Nombres y valores de los campos
         String name = ((TextField) customerBinder.getFields().findFirst().orElse(null)).getValue();
-        String email = ((EmailField) customerBinder.getFields().skip(1).findFirst().orElse(null)).getValue();
-        String phone = ((TextField) customerBinder.getFields().skip(2).findFirst().orElse(null)).getValue();
+        String email =
+                ((EmailField) customerBinder.getFields().skip(1).findFirst().orElse(null)).getValue();
+        String phone =
+                ((TextField) customerBinder.getFields().skip(2).findFirst().orElse(null)).getValue();
 
         return new Customer(name, email, phone);
     }
@@ -658,12 +625,18 @@ public class CheckoutView extends VerticalLayout {
      */
     private Address extractAddressData() {
         // Obtener referencias a los campos
-        TextField addressLine1Field = (TextField) addressBinder.getFields().findFirst().orElse(null);
-        TextField addressLine2Field = (TextField) addressBinder.getFields().skip(1).findFirst().orElse(null);
-        TextField cityField = (TextField) addressBinder.getFields().skip(2).findFirst().orElse(null);
-        TextField stateField = (TextField) addressBinder.getFields().skip(3).findFirst().orElse(null);
-        TextField zipCodeField = (TextField) addressBinder.getFields().skip(4).findFirst().orElse(null);
-        TextField countryField = (TextField) addressBinder.getFields().skip(5).findFirst().orElse(null);
+        TextField addressLine1Field =
+                (TextField) addressBinder.getFields().findFirst().orElse(null);
+        TextField addressLine2Field =
+                (TextField) addressBinder.getFields().skip(1).findFirst().orElse(null);
+        TextField cityField =
+                (TextField) addressBinder.getFields().skip(2).findFirst().orElse(null);
+        TextField stateField =
+                (TextField) addressBinder.getFields().skip(3).findFirst().orElse(null);
+        TextField zipCodeField =
+                (TextField) addressBinder.getFields().skip(4).findFirst().orElse(null);
+        TextField countryField =
+                (TextField) addressBinder.getFields().skip(5).findFirst().orElse(null);
 
         // Obtener valores
         String addressLine1 = addressLine1Field != null ? addressLine1Field.getValue() : "";

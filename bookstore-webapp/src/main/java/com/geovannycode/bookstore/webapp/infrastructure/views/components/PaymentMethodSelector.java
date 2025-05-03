@@ -1,6 +1,5 @@
 package com.geovannycode.bookstore.webapp.infrastructure.views.components;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H3;
@@ -20,7 +19,6 @@ public class PaymentMethodSelector extends VerticalLayout {
     private String selectedPaymentType = null;
     private PaymentSelectionListener listener;
 
-
     public PaymentMethodSelector() {
         setPadding(true);
         setSpacing(true);
@@ -35,7 +33,6 @@ public class PaymentMethodSelector extends VerticalLayout {
         HorizontalLayout paymentOptions = createPaymentOptions();
         add(paymentOptions);
     }
-
 
     private HorizontalLayout createPaymentOptions() {
         HorizontalLayout layout = new HorizontalLayout();
@@ -53,12 +50,12 @@ public class PaymentMethodSelector extends VerticalLayout {
         Div paypalOption = createPaymentOption("PayPal", "images/payment/paypal.png", "Pago con cuenta PayPal");
 
         // Opción de Mercado Pago
-        Div mercadoPagoOption = createPaymentOption("Mercado Pago", "images/payment/mercadopago.png", "Múltiples opciones de pago");
+        Div mercadoPagoOption =
+                createPaymentOption("Mercado Pago", "images/payment/mercadopago.png", "Múltiples opciones de pago");
 
         layout.add(creditOption, stripeOption, paypalOption, mercadoPagoOption);
         return layout;
     }
-
 
     private Div createPaymentOption(String type, String imagePath, String description) {
         Div option = new Div();
@@ -88,7 +85,6 @@ public class PaymentMethodSelector extends VerticalLayout {
         return option;
     }
 
-
     private void selectPaymentMethod(Div option, String type) {
         // Quitar selección anterior
         if (selectedPaymentMethod != null) {
@@ -108,11 +104,9 @@ public class PaymentMethodSelector extends VerticalLayout {
         }
     }
 
-
     public void setPaymentSelectionListener(PaymentSelectionListener listener) {
         this.listener = listener;
     }
-
 
     public String getSelectedPaymentType() {
         return selectedPaymentType;
