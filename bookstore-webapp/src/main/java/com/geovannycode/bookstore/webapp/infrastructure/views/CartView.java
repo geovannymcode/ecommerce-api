@@ -21,31 +21,38 @@ import com.vaadin.flow.component.HasValue;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Hr;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.tabs.Tab;
+import com.vaadin.flow.component.tabs.TabVariant;
+import com.vaadin.flow.component.tabs.Tabs;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.IntegerField;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
-import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -65,12 +72,13 @@ public class CartView extends VerticalLayout {
 
     private final CartController cartController;
     private final OrderController orderController;
-    private final PaymentController paymentController; // Añadido el controlador de pagos
+    private final PaymentController paymentController;
 
     private String cartId;
     private Cart cart;
 
-    private final Grid<CartItem> cartGrid = new Grid<>(CartItem.class, false);
+    private final VerticalLayout cartListLayout = new VerticalLayout();
+    // private final Grid<CartItem> cartGrid = new Grid<>(CartItem.class, false);
     private final Span totalPriceLabel = new Span("Total: $0.00");
 
     // Modelos para formularios
@@ -85,6 +93,10 @@ public class CartView extends VerticalLayout {
 
     private final Button placeOrderButton = new Button("Place Order");
 
+    private final Tabs stepTabs = new Tabs();
+    private final Div stepContent = new Div();
+    private final Map<Tab, Component> tabToComponent = new HashMap<>();
+
     public CartView(
             @Autowired CartController cartController,
             @Autowired OrderController orderController,
@@ -98,129 +110,64 @@ public class CartView extends VerticalLayout {
         setSpacing(true);
 
         H2 viewTitle = new H2("Shopping Cart");
-        viewTitle.getStyle().set("margin-top", "0");
+        // viewTitle.getStyle().set("margin-top", "0");
 
-        configureCartGrid();
+        // configureCartGrid();
 
-        VerticalLayout cartSection = new VerticalLayout(viewTitle, cartGrid, createTotalSection());
-        cartSection.setPadding(false);
-        cartSection.setSpacing(true);
+        VerticalLayout cartLayout = new VerticalLayout(viewTitle, cartListLayout, totalPriceLabel);
+        cartLayout.setPadding(false);
+        cartLayout.setSpacing(true);
 
-        VerticalLayout formSection = new VerticalLayout(
-                createCustomerSection(),
-                createDeliveryAddressSection(),
-                createPaymentSection(),
-                createOrderButtonSection());
-        formSection.setPadding(false);
-        formSection.setSpacing(true);
-
-        formSection.setWidth("100%");
-        formSection.setMaxWidth("1000px");
-        formSection.getStyle().set("margin-inline", "auto");
-
-        // add(cartSection, new Hr(),formSection);
         CardComponent cartCard = new CardComponent();
-        cartCard.add(cartSection);
+        cartCard.add(cartLayout);
+
+        Tab customerTab = new Tab(VaadinIcon.USER.create(), new Span("1. Customer Info"));
+        Tab addressTab = new Tab(VaadinIcon.HOME.create(), new Span("2. Delivery Address"));
+        Tab paymentTab = new Tab(VaadinIcon.CREDIT_CARD.create(), new Span("3. Payment Method"));
+
+        for (Tab tab : new Tab[] {customerTab, addressTab, paymentTab}) {
+            tab.addThemeVariants(TabVariant.LUMO_ICON_ON_TOP);
+        }
+
+        stepTabs.add(customerTab, addressTab, paymentTab);
+        stepTabs.setWidthFull();
+        stepTabs.addSelectedChangeListener(event -> switchTabContent(event.getSelectedTab()));
+
+        Component customerSection = createCustomerSection();
+        Component addressSection = createDeliveryAddressSection();
+        Component paymentSection = createPaymentSection();
+
+        tabToComponent.put(customerTab, customerSection);
+        tabToComponent.put(addressTab, addressSection);
+        tabToComponent.put(paymentTab, paymentSection);
+
+        stepContent.add(customerSection);
+
+        HorizontalLayout navigationButtons = new HorizontalLayout();
+        Button previous = new Button("Previous", e -> navigateStep(-1));
+        Button next = new Button("Next", e -> navigateStep(1));
+        next.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        navigationButtons.add(previous, next);
+        navigationButtons.setJustifyContentMode(JustifyContentMode.BETWEEN);
+        navigationButtons.setWidthFull();
 
         CardComponent formCard = new CardComponent();
-        formCard.add(formSection);
+        formCard.add(stepTabs, stepContent, navigationButtons);
 
         add(cartCard, new Hr(), formCard);
-        // Load cart data
         loadCart();
     }
 
-    private void configureCartGrid() {
-        cartGrid.addColumn(CartItem::getCode).setHeader("Product Code").setAutoWidth(true);
-        cartGrid.addColumn(CartItem::getName)
-                .setHeader("Product")
-                .setAutoWidth(true)
-                .setFlexGrow(1);
-        cartGrid.addColumn(item -> formatCurrency(item.getPrice()))
-                .setHeader("Price")
-                .setAutoWidth(true);
-
-        // Quantity column with editable field
-        cartGrid.addColumn(new ComponentRenderer<>(item -> {
-                    IntegerField quantityField = new IntegerField();
-                    quantityField.setValue(item.getQuantity());
-                    quantityField.setMin(1);
-                    // Añadimos flechas para incrementar/decrementar dentro del campo
-                    quantityField.setStepButtonsVisible(true);
-                    quantityField.setWidth("100px");
-
-                    quantityField.addValueChangeListener(e -> {
-                        if (e.getValue() != null && e.getValue() > 0) {
-                            updateItemQuantity(item.getCode(), e.getValue());
-                        }
-                    });
-
-                    return quantityField;
-                }))
-                .setHeader("Quantity")
-                .setAutoWidth(true);
-
-        // Subtotal column
-        cartGrid.addColumn(CartItem::getSubTotal)
-                .setHeader("Subtotal")
-                .setAutoWidth(true)
-                .setRenderer(new ComponentRenderer<>(item -> new Span(formatCurrency(item.getSubTotal()))));
-
-        // Actions column
-        cartGrid.addColumn(new ComponentRenderer<>(item -> {
-                    Button removeButton = new Button(new Icon(VaadinIcon.TRASH));
-                    removeButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
-                    removeButton.getElement().setAttribute("aria-label", "Remove item");
-
-                    removeButton.addClickListener(e -> removeItem(item.getCode()));
-
-                    return removeButton;
-                }))
-                .setHeader("Actions")
-                .setAutoWidth(true);
-
-        cartGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER, GridVariant.LUMO_ROW_STRIPES);
-
-        cartGrid.setWidthFull();
-        cartGrid.setColumnReorderingAllowed(true);
-
-        // Configuramos la altura dinámica
-        updateGridHeight();
+    private void switchTabContent(Tab selectedTab) {
+        stepContent.removeAll();
+        stepContent.add(tabToComponent.get(selectedTab));
     }
 
-    /**
-     * Actualiza la altura del grid del carrito según la cantidad de elementos.
-     * Para 5 elementos o menos, el grid mostrará todos los elementos sin desplazamiento.
-     * Para más de 5 elementos, el grid mantendrá una altura fija que muestra aproximadamente 5 elementos
-     * y habilitará el desplazamiento para el resto.
-     */
-    private void updateGridHeight() {
-        if (cart != null && cart.getItems() != null) {
-            int itemCount = cart.getItems().size();
-
-            // Hacer el grid visible
-            cartGrid.setVisible(true);
-
-            if (itemCount <= 5) {
-                // Para 5 elementos o menos, ajustar altura para mostrar todos sin scroll
-                // Aproximadamente 53px por fila (incluyendo cabecera) basado en el estilo por defecto de Vaadin
-                int gridHeight = (itemCount + 1) * 53; // +1 para la fila de cabecera
-                cartGrid.setHeight(gridHeight + "px");
-                cartGrid.getStyle().set("overflow", "hidden");
-
-                log.info("Carrito con {} elementos, altura ajustada a {}px sin scroll", itemCount, gridHeight);
-            } else {
-                // Para más de 5 elementos, fijar la altura para mostrar aproximadamente 5 elementos
-                // y habilitar el desplazamiento para el resto
-                int gridHeight = 6 * 53; // 5 elementos + 1 cabecera
-                cartGrid.setHeight(gridHeight + "px");
-                cartGrid.getStyle().set("overflow", "auto");
-
-                log.info("Carrito con {} elementos, altura fijada a {}px con scroll habilitado", itemCount, gridHeight);
-            }
-        } else {
-            // Si no hay carrito o está vacío, configuramos una altura mínima
-            cartGrid.setHeight("100px");
+    private void navigateStep(int direction) {
+        int currentIndex = stepTabs.getSelectedIndex();
+        int targetIndex = currentIndex + direction;
+        if (targetIndex >= 0 && targetIndex < stepTabs.getComponentCount()) {
+            stepTabs.setSelectedIndex(targetIndex);
         }
     }
 
@@ -387,8 +334,8 @@ public class CartView extends VerticalLayout {
     private HorizontalLayout createOrderButtonSection() {
         placeOrderButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         placeOrderButton.getStyle().set("margin-top", "20px");
-        // placeOrderButton.addClickListener(e -> placeOrder());
-        placeOrderButton.addClickListener(e -> UI.getCurrent().navigate(CheckoutView.class));
+        placeOrderButton.addClickListener(e -> placeOrder());
+        // placeOrderButton.addClickListener(e -> UI.getCurrent().navigate(CheckoutView.class));
 
         HorizontalLayout layout = new HorizontalLayout(placeOrderButton);
         layout.setJustifyContentMode(JustifyContentMode.END);
@@ -397,59 +344,114 @@ public class CartView extends VerticalLayout {
     }
 
     private void loadCart() {
-        try {
-            // Get cart from session or cookies if available
-            cartId = getCartIdFromSession();
+        cartId = getCartIdFromSession();
+        cart = cartController.getCart(cartId).getBody();
+        cartListLayout.removeAll();
 
-            // Fetch the cart from the API
-            cart = cartController.getCart(cartId).getBody();
+        for (CartItem item : cart.getItems()) {
+            HorizontalLayout itemLayout = new HorizontalLayout();
+            itemLayout.setAlignItems(Alignment.CENTER);
+            itemLayout.setWidthFull();
+            itemLayout.getStyle().set("border-bottom", "1px solid #e0e0e0").set("padding", "10px 0");
 
-            if (cart != null) {
-                cartId = cart.getId();
+            Checkbox select = new Checkbox();
+            select.setValue(true);
 
-                // Store cart ID in session
-                storeCartIdInSession(cartId);
+            Component imageComponent;
+            String imageUrl = item.getImageUrl();
 
-                // Update cart UI
-                updateCartUI();
-
-                // Update cart badge in main layout
-                Optional<MainLayout> mainLayout = getParentLayout();
-                if (mainLayout.isPresent()) {
-                    CartBadge cartBadge = mainLayout.get().getCartBadge();
-                    cartBadge.updateCount(cart.getItems().size());
-                }
+            if (imageUrl != null && !imageUrl.isBlank()) {
+                Image image = new Image(imageUrl, item.getName());
+                image.setWidth("60px");
+                image.setHeight("auto");
+                imageComponent = image;
             } else {
-                cart = new Cart();
-                showEmptyCartMessage();
+                Span placeholder = new Span("Imagen no disponible");
+                placeholder
+                        .getStyle()
+                        .set("width", "60px")
+                        .set("height", "60px")
+                        .set("display", "flex")
+                        .set("align-items", "center")
+                        .set("justify-content", "center")
+                        .set("background-color", "#f0f0f0")
+                        .set("border-radius", "4px")
+                        .set("font-size", "10px")
+                        .set("text-align", "center");
+                imageComponent = placeholder;
             }
-        } catch (Exception e) {
-            log.error("Error loading cart", e);
-            Notification.show("Failed to load cart: " + e.getMessage(), 3000, Notification.Position.MIDDLE)
-                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
-            cart = new Cart();
-            showEmptyCartMessage();
+
+            VerticalLayout details = new VerticalLayout();
+            details.setSpacing(false);
+            details.setPadding(false);
+            details.add(new Span(item.getName()), new Span("Price: $" + item.getPrice()));
+
+            NumberField quantityField = new NumberField();
+            quantityField.setValue((double) item.getQuantity()); // cast explícito a double
+            quantityField.setMin(1);
+            quantityField.setStep(1);
+
+            Button increment = new Button("+", e -> {
+                Double current = quantityField.getValue();
+                if (current != null) {
+                    quantityField.setValue(current + 1);
+                }
+            });
+
+            Button decrement = new Button("-", e -> {
+                Double current = quantityField.getValue();
+                if (current != null && current > 1) {
+                    quantityField.setValue(current - 1);
+                }
+            });
+
+            quantityField.addValueChangeListener(event -> {
+                if (event.getValue() != null) {
+                    int value = event.getValue().intValue();
+                    CartItemRequestDTO request = new CartItemRequestDTO(item.getCode(), value);
+                    cartController.updateCartItemQuantity(cartId, request);
+                    loadCart();
+                }
+            });
+
+            // Aquí usamos los controles visuales correctamente
+            HorizontalLayout controls = new HorizontalLayout(decrement, quantityField, increment);
+            controls.setAlignItems(FlexComponent.Alignment.CENTER);
+
+            Button delete = new Button(VaadinIcon.TRASH.create(), e -> {
+                cartController.removeCartItem(cartId, item.getCode());
+                loadCart();
+            });
+            delete.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+            itemLayout.add(select, imageComponent, details, controls, delete);
+            cartListLayout.add(itemLayout);
         }
+
+        totalPriceLabel.setText("Total: $"
+                + cart.getItems().stream()
+                        .map(item -> item.getPrice().multiply(new java.math.BigDecimal(item.getQuantity())))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
     private void updateCartUI() {
         if (cart == null || cart.getItems() == null || cart.getItems().isEmpty()) {
-            cartGrid.setItems();
+            //  cartGrid.setItems();
             totalPriceLabel.setText("Total: " + formatCurrency(BigDecimal.ZERO));
             showEmptyCartMessage();
             placeOrderButton.setEnabled(false);
         } else {
-            cartGrid.setItems(cart.getItems());
+            // cartGrid.setItems(cart.getItems());
             totalPriceLabel.setText("Total: " + formatCurrency(cart.getTotalAmount()));
             placeOrderButton.setEnabled(true);
 
             // Actualizamos la altura del grid
-            updateGridHeight();
+            // updateGridHeight();
         }
     }
 
     private void showEmptyCartMessage() {
-        cartGrid.setVisible(false);
+        // cartGrid.setVisible(false);
         Notification.show("Your cart is empty. Continue shopping to add items.", 3000, Notification.Position.MIDDLE);
     }
 
@@ -604,10 +606,6 @@ public class CartView extends VerticalLayout {
         }
     }
 
-    /**
-     * Valida el pago usando el servicio de pago y continúa con la confirmación
-     * si el pago es válido
-     */
     private void validatePaymentAndProceed(PaymentRequest paymentRequest) {
         try {
             // Mostrar un indicador de carga mientras se valida el pago
@@ -903,9 +901,6 @@ public class CartView extends VerticalLayout {
         }
     }
 
-    /**
-     * Extrae la información del cliente del formulario
-     */
     private Customer extractCustomerFromForm() {
         String customerName = customerBinder
                 .getFields()
@@ -986,9 +981,6 @@ public class CartView extends VerticalLayout {
                     zipCode,
                     country);
 
-            // El método es llamado desde showOrderConfirmationDialog, donde solo necesitamos
-            // mostrar información, no validarla completamente
-            // Determinar si es llamado desde el diálogo de confirmación
             boolean isCalledFromDialog = false;
             StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
             for (StackTraceElement element : stackTrace) {
@@ -1187,9 +1179,6 @@ public class CartView extends VerticalLayout {
         return new Address(addressLine1, addressLine2, city, state, zipCode, country);
     }
 
-    /**
-     * Extrae los datos de pago del formulario
-     */
     private PaymentRequest extractPaymentRequestFromForm() {
         PaymentRequest request = new PaymentRequest();
 
@@ -1236,8 +1225,6 @@ public class CartView extends VerticalLayout {
     }
 
     private void storeCartIdInSession(String cartId) {
-        // In a real application, this would store the cart ID in session or cookies
-        // For now, using a simple UI session attribute
         UI.getCurrent().getSession().setAttribute("cartId", cartId);
     }
 

@@ -52,6 +52,7 @@ public class CartService
                 product.code(),
                 product.name(),
                 product.description(),
+                product.imageUrl(),
                 product.price(),
                 cartItemRequest.quantity() > 0 ? cartItemRequest.quantity() : 1);
         cart.addItem(cartItem);

@@ -265,27 +265,7 @@ public class ProductGridView extends VerticalLayout {
                 .set("-webkit-line-clamp", "2")
                 .set("-webkit-box-orient", "vertical");
 
-        Button addButton = new Button("ADD");
-        addButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        addButton.getStyle().set("display", "block").set("margin", "10px auto").set("padding", "5px 20px");
-
-        // Corregido: Usamos una solución diferente para evitar propagación
-        // Creamos un wrapper para el botón que capturará el evento
-        Div buttonWrapper = new Div(addButton);
-        buttonWrapper.setWidthFull();
-
-        // Añadimos el listener en el botón directamente usando un handler que no propague
-        addButton.addClickListener(event -> {
-            // Esto previene que el evento llegue al card
-            event.getSource()
-                    .getElement()
-                    .executeJs("this.dispatchEvent(new CustomEvent('product-add-to-cart', {bubbles: false}))");
-
-            // Llamamos a addToCart directamente
-            addToCart(product);
-        });
-
-        card.add(imageContainer, title, buttonWrapper);
+        card.add(imageContainer, title);
 
         // La card navega al detalle
         card.addClickListener(e -> {
