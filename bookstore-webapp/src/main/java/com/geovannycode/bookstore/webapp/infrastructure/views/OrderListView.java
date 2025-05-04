@@ -3,6 +3,7 @@ package com.geovannycode.bookstore.webapp.infrastructure.views;
 import com.geovannycode.bookstore.webapp.domain.model.OrderSummary;
 import com.geovannycode.bookstore.webapp.infrastructure.api.controller.OrderController;
 import com.geovannycode.bookstore.webapp.infrastructure.views.components.CardComponent;
+import com.geovannycode.bookstore.webapp.infrastructure.views.components.StatusBadge;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -82,31 +83,13 @@ public class OrderListView extends VerticalLayout {
         // Columna de estado con color
         orderGrid
                 .addColumn(new ComponentRenderer<>(item -> {
-                    Span statusLabel = new Span(item.status().toString());
-                    statusLabel.getElement().getThemeList().clear();
-
-                    switch (item.status()) {
-                        case NEW:
-                            statusLabel.getElement().getThemeList().add("badge primary");
-                            break;
-                        case IN_PROCESS:
-                            statusLabel.getElement().getThemeList().add("badge contrast");
-                            break;
-                        case DELIVERED:
-                            statusLabel.getElement().getThemeList().add("badge success");
-                            break;
-                        case CANCELLED:
-                        case ERROR:
-                            statusLabel.getElement().getThemeList().add("badge error");
-                            break;
-                        default:
-                            statusLabel.getElement().getThemeList().add("badge");
-                    }
-
-                    return statusLabel;
+                    StatusBadge statusBadge = new StatusBadge();
+                    statusBadge.setStatus(item.status());
+                    return statusBadge;
                 }))
                 .setHeader("Estado")
                 .setAutoWidth(true);
+
 
         // Columna de acciones
         orderGrid

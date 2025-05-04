@@ -90,11 +90,14 @@ public class CheckoutView extends VerticalLayout {
     private IntegerField expiryMonthField;
     private IntegerField expiryYearField;
     private TextField cvvField;
+    private Tab customerTab;
+    private Tab addressTab;
+    private Tab paymentTab;
 
     private final Button placeOrderButton = new Button("Place Order");
     private Button next;
     private Button previous;
-    private HorizontalLayout navigationButtons;
+    private HorizontalLayout navigationButtons = new HorizontalLayout();
 
     private final Tabs stepTabs = new Tabs();
     private final Div stepContent = new Div();
@@ -120,16 +123,31 @@ public class CheckoutView extends VerticalLayout {
         orderSummaryCard.add(orderSummaryLayout);
 
         // Checkout steps
-        Tab customerTab = new Tab(VaadinIcon.USER.create(), new Span("Customer Info"));
-        Tab addressTab = new Tab(VaadinIcon.HOME.create(), new Span("Delivery Address"));
-        Tab paymentTab = new Tab(VaadinIcon.CREDIT_CARD.create(), new Span("Payment Method"));
+        customerTab = new Tab(VaadinIcon.USER.create(), new Span("Customer Info"));
+        addressTab = new Tab(VaadinIcon.HOME.create(), new Span("Delivery Address"));
+        paymentTab = new Tab(VaadinIcon.CREDIT_CARD.create(), new Span("Payment Method"));
 
         for (Tab tab : new Tab[] {customerTab, addressTab, paymentTab}) {
             tab.addThemeVariants(TabVariant.LUMO_ICON_ON_TOP);
         }
 
+        addressTab.setEnabled(false);
+        paymentTab.setEnabled(false);
+
         stepTabs.add(customerTab, addressTab, paymentTab);
         stepTabs.setWidthFull();
+
+        // Configurar el listener para mostrar/ocultar el botón según el tab activo
+        stepTabs.addSelectedChangeListener(event -> {
+            // Si intentan cambiar a un tab deshabilitado, revertir a la selección anterior
+            if (!event.getSelectedTab().isEnabled()) {
+                stepTabs.setSelectedTab(event.getPreviousTab());
+            }
+            // De lo contrario, cambiar el contenido
+            else {
+                switchTabContent(event.getSelectedTab());
+            }
+        });
 
         Component customerSection = createCustomerSection();
         Component addressSection = createDeliveryAddressSection();
@@ -141,12 +159,14 @@ public class CheckoutView extends VerticalLayout {
 
         stepContent.add(customerSection);
 
-        HorizontalLayout navigationButtons = new HorizontalLayout();
-        previous = new Button("Previous", e -> navigateStep(-1));
-        next = new Button("Next", e -> navigateStep(1));
+        navigationButtons = new HorizontalLayout();
+        previous = new Button("Previous", e -> navigatePrevious());
+        next = new Button("Next", e -> validateAndNavigateNext());
+
         previous.setWidth("120px");
         next.setWidth("120px");
         next.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
         placeOrderButton.setWidth("120px");
         placeOrderButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         placeOrderButton.addClickListener(e -> placeOrder());
@@ -163,19 +183,116 @@ public class CheckoutView extends VerticalLayout {
 
         add(viewTitle, orderSummaryCard, checkoutCard);
 
-        // Configurar el listener para mostrar/ocultar el botón según el tab activo
-        stepTabs.addSelectedChangeListener(event -> {
-            Tab selectedTab = event.getSelectedTab();
-            switchTabContent(selectedTab);
+        addFieldValueChangeListeners();
+        addPhoneFieldEnterKeyListener();
+        addCountryFieldEnterKeyListener();
+        loadCart();
+    }
 
-            // Mostrar el botón Place Order solo en la pestaña de pago
-            boolean isPaymentTab = selectedTab.equals(paymentTab);
-            if (!isPaymentTab) {
-                placeOrderButton.setVisible(false);
+    private void navigatePrevious() {
+        int currentIndex = stepTabs.getSelectedIndex();
+        if (currentIndex > 0) {
+            stepTabs.setSelectedIndex(currentIndex - 1);
+        }
+    }
+
+    private void validateAndNavigateNext() {
+        int currentIndex = stepTabs.getSelectedIndex();
+
+        if (currentIndex == 0) {
+            // Validar Customer Info
+            if (validateCustomerInfo()) {
+                // Activar el siguiente tab
+                stepTabs.setEnabled(true);
+                stepTabs.setSelectedIndex(1);
+            }
+        } else if (currentIndex == 1) {
+            // Validar Delivery Address
+            if (validateDeliveryAddress()) {
+                // Activar el siguiente tab
+                stepTabs.setEnabled(true);
+                stepTabs.setSelectedIndex(2);
+            }
+        }
+    }
+
+    private boolean validateDeliveryAddress() {
+        if (!addressBinder.isValid()) {
+            StringBuilder errorMessage = new StringBuilder("Please complete delivery address:\n");
+            addressBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                    .append("- ")
+                    .append(error.getMessage())
+                    .append("\n"));
+
+            Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return false;
+        }
+        return true;
+    }
+
+    private void checkCustomerInfoCompletion() {
+        if (customerBinder.isValid()) {
+            addressTab.setEnabled(true);
+        } else {
+            addressTab.setEnabled(false);
+        }
+    }
+
+    private void checkAddressCompletion() {
+        if (addressBinder.isValid()) {
+            paymentTab.setEnabled(true);
+        } else {
+            paymentTab.setEnabled(false);
+        }
+    }
+
+    private void addFieldValueChangeListeners() {
+        // Verificar todos los campos de Customer Info cuando cambian
+        nameField.addValueChangeListener(e -> checkCustomerInfoCompletion());
+        emailField.addValueChangeListener(e -> checkCustomerInfoCompletion());
+        phoneField.addValueChangeListener(e -> {
+            checkCustomerInfoCompletion();
+
+            // Si se presiona Enter y los datos son válidos, navegar automáticamente
+            if (e.isFromClient() && e.getValue() != null && !e.getValue().isEmpty() && customerBinder.isValid()) {
+                addressTab.setEnabled(true);
+                stepTabs.setSelectedIndex(1);
             }
         });
 
-        loadCart();
+        // Verificar todos los campos de Address cuando cambian
+        countryField.addValueChangeListener(e -> {
+            checkAddressCompletion();
+
+            // Auto-navegación cuando se completa el país (y toda la dirección es válida)
+            if (e.isFromClient() && addressBinder.isValid()) {
+                // Habilitar pestaña de pago
+                stepTabs.setEnabled(true);
+                stepTabs.setSelectedIndex(2);
+            }
+        });
+
+        // También añadir listeners a los otros campos de dirección
+        addressLine1Field.addValueChangeListener(e -> checkAddressCompletion());
+        cityField.addValueChangeListener(e -> checkAddressCompletion());
+        stateField.addValueChangeListener(e -> checkAddressCompletion());
+        zipCodeField.addValueChangeListener(e -> checkAddressCompletion());
+    }
+
+    private boolean validateCustomerInfo() {
+        if (!customerBinder.isValid()) {
+            StringBuilder errorMessage = new StringBuilder("Please complete customer information:\n");
+            customerBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                    .append("- ")
+                    .append(error.getMessage())
+                    .append("\n"));
+
+            Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return false;
+        }
+        return true;
     }
 
     private VerticalLayout createOrderSummaryLayout() {
@@ -201,22 +318,20 @@ public class CheckoutView extends VerticalLayout {
         // Determinar si estamos en la pestaña de pago
         boolean isPaymentTab = selectedTab.equals(stepTabs.getComponentAt(2));
 
-        // Configurar visibilidad de botones según la pestaña
         if (isPaymentTab) {
-            // En pestaña de pago, ocultar Next y mostrar Place Order solo cuando se seleccione un método
+
             next.setVisible(false);
 
-            // Si ya hay un método de pago seleccionado, mostrar el botón Place Order
             placeOrderButton.setVisible(selectedPaymentMethod != null);
 
             // Asegurarse de que el botón Place Order esté en el layout de navegación
             if (!navigationButtons.getChildren().anyMatch(c -> c == placeOrderButton)) {
                 navigationButtons.add(placeOrderButton);
             }
+            placeOrderButton.setVisible(selectedPaymentMethod != null);
         } else {
             // En otras pestañas, mostrar Next y ocultar Place Order
             next.setVisible(true);
-            placeOrderButton.setVisible(false);
 
             // Remover el botón Place Order si está en el layout
             navigationButtons
@@ -224,14 +339,6 @@ public class CheckoutView extends VerticalLayout {
                     .filter(c -> c == placeOrderButton)
                     .findFirst()
                     .ifPresent(button -> navigationButtons.remove(button));
-        }
-    }
-
-    private void navigateStep(int direction) {
-        int currentIndex = stepTabs.getSelectedIndex();
-        int targetIndex = currentIndex + direction;
-        if (targetIndex >= 0 && targetIndex < stepTabs.getComponentCount()) {
-            stepTabs.setSelectedIndex(targetIndex);
         }
     }
 
@@ -249,18 +356,18 @@ public class CheckoutView extends VerticalLayout {
         customerBinder
                 .forField(nameField)
                 .asRequired("Name is required")
-                .bind(Customer::name, (customer, value) -> new Customer(value, customer.email(), customer.phone()));
+                .bind(Customer::getName, Customer::setName);
 
         customerBinder
                 .forField(emailField)
                 .asRequired("Email is required")
                 .withValidator(email -> email.contains("@"), "Enter a valid email address")
-                .bind(Customer::email, (customer, value) -> new Customer(customer.name(), value, customer.phone()));
+                .bind(Customer::getEmail, Customer::setEmail);
 
         customerBinder
                 .forField(phoneField)
                 .asRequired("Phone is required")
-                .bind(Customer::phone, (customer, value) -> new Customer(customer.name(), customer.email(), value));
+                .bind(Customer::getPhone, Customer::setPhone);
 
         // Setting up the model
         customerBinder.setBean(new Customer("", "", ""));
@@ -285,92 +392,38 @@ public class CheckoutView extends VerticalLayout {
                 new FormLayout.ResponsiveStep("900px", 3));
 
         addressLine1Field = new TextField("Address Line 1");
-        addressLine2Field = new TextField("Address Line 2");
+        addressLine2Field = new TextField("Address Line 2"); // Opcional
         cityField = new TextField("City");
         stateField = new TextField("State");
         zipCodeField = new TextField("Zip Code");
         countryField = new TextField("Country");
 
-        // Configure field validations and bindings
-        addressBinder
-                .forField(addressLine1Field)
+        // Configure field validations and bindings (usando setters y getters)
+        addressBinder.forField(addressLine1Field)
                 .asRequired("Address is required")
-                .bind(
-                        Address::addressLine1,
-                        (address, value) -> new Address(
-                                value,
-                                address.addressLine2(),
-                                address.city(),
-                                address.state(),
-                                address.zipCode(),
-                                address.country()));
+                .bind(Address::getAddressLine1, Address::setAddressLine1);
 
-        addressBinder
-                .forField(addressLine2Field)
-                .bind(
-                        Address::addressLine2,
-                        (address, value) -> new Address(
-                                address.addressLine1(),
-                                value,
-                                address.city(),
-                                address.state(),
-                                address.zipCode(),
-                                address.country()));
+        addressBinder.forField(addressLine2Field)
+                .bind(Address::getAddressLine2, Address::setAddressLine2); // No asRequired()
 
-        addressBinder
-                .forField(cityField)
+        addressBinder.forField(cityField)
                 .asRequired("City is required")
-                .bind(
-                        Address::city,
-                        (address, value) -> new Address(
-                                address.addressLine1(),
-                                address.addressLine2(),
-                                value,
-                                address.state(),
-                                address.zipCode(),
-                                address.country()));
+                .bind(Address::getCity, Address::setCity);
 
-        addressBinder
-                .forField(stateField)
+        addressBinder.forField(stateField)
                 .asRequired("State is required")
-                .bind(
-                        Address::state,
-                        (address, value) -> new Address(
-                                address.addressLine1(),
-                                address.addressLine2(),
-                                address.city(),
-                                value,
-                                address.zipCode(),
-                                address.country()));
+                .bind(Address::getState, Address::setState);
 
-        addressBinder
-                .forField(zipCodeField)
+        addressBinder.forField(zipCodeField)
                 .asRequired("Zip code is required")
-                .bind(
-                        Address::zipCode,
-                        (address, value) -> new Address(
-                                address.addressLine1(),
-                                address.addressLine2(),
-                                address.city(),
-                                address.state(),
-                                value,
-                                address.country()));
+                .bind(Address::getZipCode, Address::setZipCode);
 
-        addressBinder
-                .forField(countryField)
+        addressBinder.forField(countryField)
                 .asRequired("Country is required")
-                .bind(
-                        Address::country,
-                        (address, value) -> new Address(
-                                address.addressLine1(),
-                                address.addressLine2(),
-                                address.city(),
-                                address.state(),
-                                address.zipCode(),
-                                value));
+                .bind(Address::getCountry, Address::setCountry);
 
         // Setting up the model
-        addressBinder.setBean(new Address("", "", "", "", "", ""));
+        addressBinder.setBean(new Address());
 
         // Add fields to form
         form.add(addressLine1Field, addressLine2Field, cityField, stateField, zipCodeField, countryField);
@@ -385,6 +438,7 @@ public class CheckoutView extends VerticalLayout {
         layout.getStyle().set("margin-bottom", "var(--lumo-space-l)");
         return layout;
     }
+
 
     private VerticalLayout createPaymentSection() {
         H3 sectionTitle = new H3("Select your payment method");
@@ -417,6 +471,14 @@ public class CheckoutView extends VerticalLayout {
 
         // Add click events to cards
         creditCard.addClickListener(e -> {
+            // Verificar que la dirección está completa antes de permitir seleccionar método de pago
+            if (!addressBinder.isValid()) {
+                Notification.show("Please complete all required address fields", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
+            // Si la dirección es válida, proceder normalmente
             selectPaymentCard(paymentOptionsLayout, creditCard);
             creditCardFormDiv.setVisible(true);
             selectedPaymentMethod = "credit";
@@ -424,6 +486,12 @@ public class CheckoutView extends VerticalLayout {
         });
 
         stripeCard.addClickListener(e -> {
+            if (!addressBinder.isValid()) {
+                Notification.show("Please complete all required address fields", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
             selectPaymentCard(paymentOptionsLayout, stripeCard);
             creditCardFormDiv.setVisible(false);
             selectedPaymentMethod = "stripe";
@@ -431,6 +499,12 @@ public class CheckoutView extends VerticalLayout {
         });
 
         paypalCard.addClickListener(e -> {
+            if (!addressBinder.isValid()) {
+                Notification.show("Please complete all required address fields", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
             selectPaymentCard(paymentOptionsLayout, paypalCard);
             creditCardFormDiv.setVisible(false);
             selectedPaymentMethod = "paypal";
@@ -438,6 +512,12 @@ public class CheckoutView extends VerticalLayout {
         });
 
         mercadoPagoCard.addClickListener(e -> {
+            if (!addressBinder.isValid()) {
+                Notification.show("Please complete all required address fields", 3000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
             selectPaymentCard(paymentOptionsLayout, mercadoPagoCard);
             creditCardFormDiv.setVisible(false);
             selectedPaymentMethod = "mercadopago";
@@ -668,32 +748,16 @@ public class CheckoutView extends VerticalLayout {
 
             // Validate customer information
             if (!customerBinder.isValid()) {
-                StringBuilder errorMessage = new StringBuilder("Please complete customer information:\n");
-                customerBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
-                        .append("- ")
-                        .append(error.getMessage())
-                        .append("\n"));
-
-                Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
-
-                // Switch to customer tab
+                // Mostrar errores y navegar al tab correspondiente
+                showCustomerValidationErrors();
                 stepTabs.setSelectedIndex(0);
                 return;
             }
 
             // Validate delivery address
             if (!addressBinder.isValid()) {
-                StringBuilder errorMessage = new StringBuilder("Please complete delivery address:\n");
-                addressBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
-                        .append("- ")
-                        .append(error.getMessage())
-                        .append("\n"));
-
-                Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
-                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
-
-                // Switch to address tab
+                // Mostrar errores y navegar al tab correspondiente
+                showAddressValidationErrors();
                 stepTabs.setSelectedIndex(1);
                 return;
             }
@@ -705,26 +769,23 @@ public class CheckoutView extends VerticalLayout {
                 return;
             }
 
-            // Validate payment information according to the selected payment method
+            if ("credit".equals(selectedPaymentMethod) && !paymentBinder.isValid()) {
+                StringBuilder errorMessage = new StringBuilder("Please complete payment information:\n");
+                paymentBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                        .append("- ")
+                        .append(error.getMessage())
+                        .append("\n"));
+
+                Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                return;
+            }
+
+            // Proceder con el pago según el método seleccionado
             if ("credit".equals(selectedPaymentMethod)) {
-                // Validate credit card form
-                if (!paymentBinder.isValid()) {
-                    StringBuilder errorMessage = new StringBuilder("Please complete payment information:\n");
-                    paymentBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
-                            .append("- ")
-                            .append(error.getMessage())
-                            .append("\n"));
-
-                    Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
-                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
-                    return;
-                }
-
-                // Extract payment data for validation
                 PaymentRequest paymentRequest = paymentBinder.getBean();
                 validatePaymentAndProceed(paymentRequest);
             } else {
-                // Para los otros métodos de pago simulamos un pago exitoso directamente
                 processAlternativePaymentMethod(selectedPaymentMethod);
             }
 
@@ -822,24 +883,51 @@ public class CheckoutView extends VerticalLayout {
         }
     }
 
-    /**
-     * Shows the confirmation dialog before processing the order
-     */
     private void showOrderConfirmationDialog() {
         ConfirmDialog confirmDialog = new ConfirmDialog();
         confirmDialog.setHeader("Confirm Order");
 
-        // Build order summary to display
+        // Obtener el bean actualizado desde el binder
+        Address address = addressBinder.getBean();
+
+        // Validación adicional (por si acaso)
+        if (address == null || address.getAddressLine1() == null || address.getCity() == null) {
+            Notification.show("Address information is incomplete.", 5000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        // Log de depuración
+        log.info(
+                "Confirming order to address: {}, {}, {}, {}, {}",
+                address.getAddressLine1(),
+                address.getCity(),
+                address.getState(),
+                address.getZipCode(),
+                address.getCountry());
+
+        // Construcción de la dirección formateada
+        String fullAddress = String.format(
+                "%s%s, %s, %s %s, %s",
+                address.getAddressLine1(),
+                address.getAddressLine2() != null && !address.getAddressLine2().isEmpty()
+                        ? " " + address.getAddressLine2()
+                        : "",
+                address.getCity(),
+                address.getState(),
+                address.getZipCode(),
+                address.getCountry());
+
+        // Construir resumen de orden
         StringBuilder orderSummary = new StringBuilder();
         orderSummary
                 .append("Total: ")
                 .append(formatCurrency(cart.getTotalAmount()))
                 .append("\n");
         orderSummary.append("Products: ").append(cart.getItems().size()).append("\n");
+        orderSummary.append("Shipping to: ").append(fullAddress);
 
-        Address address = addressBinder.getBean();
-        orderSummary.append("Shipping to: ").append(address.city()).append(", ").append(address.country());
-
+        // Mostrar resumen en el diálogo
         confirmDialog.setText(orderSummary.toString());
 
         confirmDialog.setCancelable(true);
@@ -853,123 +941,92 @@ public class CheckoutView extends VerticalLayout {
         confirmDialog.open();
     }
 
-    /**
-     * Processes the order
-     */
+
+
+    private void restorePlaceOrderButton() {
+        placeOrderButton.setEnabled(true);
+        placeOrderButton.setText("Place Order");
+        placeOrderButton.setIcon(null);
+        placeOrderButton.getStyle().remove("cursor");
+    }
+
     private void processOrder() {
         try {
-            // Show loading indicator while processing the order
             UI.getCurrent().setPollInterval(500);
             placeOrderButton.setEnabled(false);
             placeOrderButton.setText("Processing...");
             placeOrderButton.setIcon(new Icon(VaadinIcon.SPINNER));
             placeOrderButton.getStyle().set("cursor", "wait");
 
-            // Convert cart items to OrderItems
             Set<OrderItem> orderItems = cart.getItems().stream()
                     .map(item -> new OrderItem(item.getCode(), item.getName(), item.getPrice(), item.getQuantity()))
                     .collect(Collectors.toSet());
 
-            // Get customer and address from binders
-            Customer customer = customerBinder.getBean();
-            Address address = addressBinder.getBean();
+            Customer customer = new Customer(
+                    nameField.getValue(),
+                    emailField.getValue(),
+                    phoneField.getValue()
+            );
 
-            // Log values for debugging
-            log.info(
-                    "Address for creating order - addressLine1: '{}', addressLine2: '{}', city: '{}', state: '{}', zipCode: '{}', country: '{}'",
-                    address.addressLine1(),
-                    address.addressLine2(),
-                    address.city(),
-                    address.state(),
-                    address.zipCode(),
-                    address.country());
-
-            // Verify all required fields are present
-            if (address.addressLine1().isEmpty()
-                    || address.city().isEmpty()
-                    || address.state().isEmpty()
-                    || address.zipCode().isEmpty()
-                    || address.country().isEmpty()) {
-
-                // Restore button
-                placeOrderButton.setEnabled(true);
-                placeOrderButton.setText("Place Order");
-                placeOrderButton.setIcon(null);
-                placeOrderButton.getStyle().remove("cursor");
-
-                // Show errors
+            // Escribimos los valores del formulario en el objeto Address
+            Address address = new Address();
+            if (!addressBinder.writeBeanIfValid(address)) {
+                restorePlaceOrderButton();
                 Notification.show("Please complete all required address fields", 5000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
-
                 UI.getCurrent().setPollInterval(-1);
                 return;
             }
 
-            // Create the order request
+            log.info(
+                    "Address for creating order - addressLine1: '{}', addressLine2: '{}', city: '{}', state: '{}', zipCode: '{}', country: '{}'",
+                    address.getAddressLine1(),
+                    address.getAddressLine2(),
+                    address.getCity(),
+                    address.getState(),
+                    address.getZipCode(),
+                    address.getCountry());
+
             CreateOrderRequest orderRequest = new CreateOrderRequest(orderItems, customer, address);
 
-            // Send request to order controller
             OrderConfirmationDTO confirmation = orderController.createOrder(orderRequest);
 
-            // Handle response
             if (confirmation != null && confirmation.orderNumber() != null) {
-                // Clear the cart
                 clearCart();
-
-                // Show success notification
                 Notification successNotification = Notification.show(
                         "Order processed successfully! Order number: " + confirmation.orderNumber(),
                         5000,
                         Notification.Position.MIDDLE);
                 successNotification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
-
-                // Navigate to confirmation page
-                UI.getCurrent().navigate("orders/" + confirmation.orderNumber());
+                UI.getCurrent().navigate("order/" + confirmation.orderNumber());
             } else {
-                // Restore button
-                placeOrderButton.setEnabled(true);
-                placeOrderButton.setText("Place Order");
-                placeOrderButton.setIcon(null);
-                placeOrderButton.getStyle().remove("cursor");
-
+                restorePlaceOrderButton();
                 Notification.show("Could not process the order, please try again", 3000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
             }
             UI.getCurrent().setPollInterval(-1);
 
         } catch (RestClientException e) {
-            // Restore button
-            placeOrderButton.setEnabled(true);
-            placeOrderButton.setText("Place Order");
-            placeOrderButton.setIcon(null);
-            placeOrderButton.getStyle().remove("cursor");
-
+            restorePlaceOrderButton();
             log.error("Error processing order", e);
-
-            // Extract error message from exception
             String errorMessage = e.getMessage();
             if (errorMessage.contains("Country is required")) {
                 errorMessage = "Country is a required field. Please complete all address fields correctly.";
             }
-
             Notification.show("Error processing order: " + errorMessage, 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
-
             UI.getCurrent().setPollInterval(-1);
-        } catch (Exception e) {
-            // Restore button
-            placeOrderButton.setEnabled(true);
-            placeOrderButton.setText("Place Order");
-            placeOrderButton.setIcon(null);
-            placeOrderButton.getStyle().remove("cursor");
 
+        } catch (Exception e) {
+            restorePlaceOrderButton();
             log.error("Unexpected error processing order", e);
             Notification.show("Unexpected error: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
-
             UI.getCurrent().setPollInterval(-1);
         }
     }
+
+
 
     private void clearCart() {
         try {
@@ -991,5 +1048,69 @@ public class CheckoutView extends VerticalLayout {
     private String getCartIdFromSession() {
         Object cartIdObj = UI.getCurrent().getSession().getAttribute("cartId");
         return cartIdObj != null ? cartIdObj.toString() : null;
+    }
+
+    private void addPhoneFieldEnterKeyListener() {
+        phoneField
+                .getElement()
+                .addEventListener("keydown", event -> {
+                    String key = event.getEventData().getString("event.key");
+                    Double keyCode = event.getEventData().getNumber("event.keyCode");
+
+                    boolean isEnterPressed = "Enter".equalsIgnoreCase(key) || keyCode == 13;
+
+                    if (isEnterPressed) {
+                        if (customerBinder.isValid()) {
+                            addressTab.setEnabled(true);
+                            stepTabs.setSelectedIndex(1);
+                        } else {
+                            showCustomerValidationErrors();
+                        }
+                    }
+                })
+                .addEventData("event.key")
+                .addEventData("event.keyCode");
+    }
+
+    private void addCountryFieldEnterKeyListener() {
+        countryField.getElement()
+                .addEventListener("keypress", event -> {
+                    String key = event.getEventData().getString("event.key");
+                    double keyCode = event.getEventData().getNumber("event.keyCode");
+
+                    if ("Enter".equalsIgnoreCase(key) || keyCode == 13) {
+                        if (addressBinder.isValid()) {
+                            paymentTab.setEnabled(true);
+                            stepTabs.setSelectedIndex(2);
+                        } else {
+                            showAddressValidationErrors();
+                        }
+                    }
+                })
+                .addEventData("event.key")
+                .addEventData("event.keyCode");
+    }
+
+
+    private void showCustomerValidationErrors() {
+        StringBuilder errorMessage = new StringBuilder("Please complete customer information:\n");
+        customerBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                .append("- ")
+                .append(error.getMessage())
+                .append("\n"));
+
+        Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+    }
+
+    private void showAddressValidationErrors() {
+        StringBuilder errorMessage = new StringBuilder("Please complete delivery address:\n");
+        addressBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                .append("- ")
+                .append(error.getMessage())
+                .append("\n"));
+
+        Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
     }
 }

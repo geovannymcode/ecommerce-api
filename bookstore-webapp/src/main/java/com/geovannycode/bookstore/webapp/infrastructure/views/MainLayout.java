@@ -1,5 +1,6 @@
 package com.geovannycode.bookstore.webapp.infrastructure.views;
 
+import com.geovannycode.bookstore.webapp.domain.model.Cart;
 import com.geovannycode.bookstore.webapp.infrastructure.api.controller.CartController;
 import com.geovannycode.bookstore.webapp.infrastructure.views.components.CartBadge;
 import com.vaadin.flow.component.AttachEvent;
@@ -17,6 +18,7 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 
 public class MainLayout extends AppLayout {
 
@@ -49,17 +51,38 @@ public class MainLayout extends AppLayout {
 
     private void updateCartBadge() {
         try {
-            // Obtener ID del carrito desde la sesión
             String cartId = getCartIdFromSession();
-
             if (cartId != null) {
-                var cart = cartController.getCart(cartId).getBody();
-                if (cart != null && cart.getItems() != null) {
-                    cartBadge.updateCount(cart.getItems().size());
+                // Intentar obtener el carrito
+                ResponseEntity<Cart> response = cartController.getCart(cartId);
+                if (response != null && response.getBody() != null) {
+                    Cart cart = response.getBody();
+                    // Actualizar el badge con la cantidad de elementos
+                    int itemCount = cart.getItems() != null ? cart.getItems().size() : 0;
+                    cartBadge.updateCount(itemCount); // Usar cartBadge, no cartLink
+                } else {
+                    // Si no hay carrito o está vacío
+                    cartBadge.updateCount(0);
+
+                    UI.getCurrent().getSession().setAttribute("cartId", null);
                 }
+            } else {
+                // Si no hay ID de carrito en la sesión
+                cartBadge.updateCount(0);
             }
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            // Manejar el caso específico de "Cart Not Found"
+            log.debug("El carrito no existe o ha sido eliminado: {}", e.getMessage());
+
+            // Eliminar el ID del carrito de la sesión
+            UI.getCurrent().getSession().setAttribute("cartId", null);
+
+            // Restablecer el badge
+            cartBadge.updateCount(0);
         } catch (Exception e) {
-            log.error("Error al actualizar el contador del carrito", e);
+            // Manejar otros errores
+            log.error("Error al actualizar el badge del carrito", e);
+            cartBadge.updateCount(0);
         }
     }
 

@@ -7,6 +7,7 @@ import com.geovannycode.bookstore.webapp.domain.model.OrderItem;
 import com.geovannycode.bookstore.webapp.domain.model.OrderStatus;
 import com.geovannycode.bookstore.webapp.infrastructure.api.controller.OrderController;
 import com.geovannycode.bookstore.webapp.infrastructure.views.components.CardComponent;
+import com.geovannycode.bookstore.webapp.infrastructure.views.components.StatusBadge;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -45,7 +46,7 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
     private final Grid<OrderItem> orderItemsGrid = new Grid<>(OrderItem.class, false);
     private final Span totalPriceLabel = new Span("Total: $0.00");
     private final Span orderNumberLabel = new Span();
-    private final Span orderStatusLabel = new Span();
+    private final StatusBadge orderStatusBadge = new StatusBadge();
 
     private final VerticalLayout customerInfoLayout = new VerticalLayout();
     private final VerticalLayout deliveryAddressLayout = new VerticalLayout();
@@ -123,27 +124,26 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
         HorizontalLayout orderStatusSection = new HorizontalLayout();
         Span orderStatusTitle = new Span("Estado: ");
         orderStatusTitle.getStyle().set("font-weight", "bold");
-        orderStatusLabel.getStyle().set("margin-left", "8px");
-        orderStatusSection.add(orderStatusTitle, orderStatusLabel);
+        orderStatusSection.add(orderStatusTitle, orderStatusBadge);
 
         layout.add(orderNumberSection, orderStatusSection);
         return layout;
     }
 
     private void configureOrderItemsGrid() {
-        orderItemsGrid.addColumn(OrderItem::code).setHeader("Código").setAutoWidth(true);
+        orderItemsGrid.addColumn(OrderItem::getCode).setHeader("Código").setAutoWidth(true);
         orderItemsGrid
-                .addColumn(OrderItem::name)
+                .addColumn(OrderItem::getName)
                 .setHeader("Producto")
                 .setAutoWidth(true)
                 .setFlexGrow(1);
         orderItemsGrid
-                .addColumn(item -> formatCurrency(item.price()))
+                .addColumn(item -> formatCurrency(item.getPrice()))
                 .setHeader("Precio")
                 .setAutoWidth(true);
-        orderItemsGrid.addColumn(OrderItem::quantity).setHeader("Cantidad").setAutoWidth(true);
+        orderItemsGrid.addColumn(OrderItem::getQuantity).setHeader("Cantidad").setAutoWidth(true);
         orderItemsGrid
-                .addColumn(item -> formatCurrency(item.price().multiply(BigDecimal.valueOf(item.quantity()))))
+                .addColumn(item -> formatCurrency(item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))))
                 .setHeader("Subtotal")
                 .setAutoWidth(true);
 
@@ -153,12 +153,7 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
         orderItemsGrid.setWidthFull();
     }
 
-    /**
-     * Actualiza la altura del grid según la cantidad de elementos.
-     * Para 5 elementos o menos, el grid mostrará todos los elementos sin desplazamiento.
-     * Para más de 5 elementos, el grid mantendrá una altura fija que muestra aproximadamente 5 elementos
-     * y habilitará el desplazamiento para el resto.
-     */
+
     private void updateGridHeight() {
         if (currentOrder != null && currentOrder.items() != null) {
             int itemCount = currentOrder.items().size();
@@ -267,10 +262,10 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
 
                 // Update order header info
                 orderNumberLabel.setText(currentOrder.orderNumber());
-                orderStatusLabel.setText(currentOrder.status().toString());
+                orderStatusBadge.setStatus(currentOrder.status());
 
                 // Configurar el color según el estado
-                setStatusColor(currentOrder.status());
+                orderStatusBadge.setStatus(currentOrder.status());
 
                 // Update order items grid
                 orderItemsGrid.setItems(currentOrder.items());
@@ -297,18 +292,6 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
         }
     }
 
-    private void setStatusColor(OrderStatus status) {
-        if (status == OrderStatus.IN_PROCESS) {
-            orderStatusLabel.getStyle().set("color", "var(--lumo-primary-color)");
-        } else if (status == OrderStatus.DELIVERED) {
-            orderStatusLabel.getStyle().set("color", "var(--lumo-success-color)");
-        } else if (status == OrderStatus.CANCELLED || status == OrderStatus.ERROR) {
-            orderStatusLabel.getStyle().set("color", "var(--lumo-error-color)");
-        } else if (status == OrderStatus.NEW) {
-            orderStatusLabel.getStyle().set("color", "var(--lumo-primary-color)");
-        }
-    }
-
     private void updateCustomerInfo(Customer customer) {
         if (customer != null) {
             VerticalLayout infoLayout = new VerticalLayout();
@@ -320,7 +303,7 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
             HorizontalLayout nameLayout = new HorizontalLayout();
             Span nameLabel = new Span("Nombre: ");
             nameLabel.getStyle().set("font-weight", "bold");
-            Span nameValue = new Span(customer.name());
+            Span nameValue = new Span(customer.getName());
             nameLayout.add(nameLabel, nameValue);
             nameLayout.setWidthFull();
             nameLayout.setSpacing(false);
@@ -331,7 +314,7 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
             HorizontalLayout emailLayout = new HorizontalLayout();
             Span emailLabel = new Span("Email: ");
             emailLabel.getStyle().set("font-weight", "bold");
-            Span emailValue = new Span(customer.email());
+            Span emailValue = new Span(customer.getEmail());
             emailLayout.add(emailLabel, emailValue);
             emailLayout.setWidthFull();
             emailLayout.setSpacing(false);
@@ -342,7 +325,7 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
             HorizontalLayout phoneLayout = new HorizontalLayout();
             Span phoneLabel = new Span("Teléfono: ");
             phoneLabel.getStyle().set("font-weight", "bold");
-            Span phoneValue = new Span(customer.phone());
+            Span phoneValue = new Span(customer.getPhone());
             phoneLayout.add(phoneLabel, phoneValue);
             phoneLayout.setWidthFull();
             phoneLayout.setSpacing(false);
@@ -365,11 +348,11 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
             addressLayout.setSpacing(false);
             addressLayout.setMargin(false);
 
-            if (address.addressLine1() != null && !address.addressLine1().isEmpty()) {
+            if (address.getAddressLine1() != null && !address.getAddressLine1().isEmpty()) {
                 HorizontalLayout line1Layout = new HorizontalLayout();
                 Span line1Label = new Span("Dirección: ");
                 line1Label.getStyle().set("font-weight", "bold");
-                Span line1Value = new Span(address.addressLine1());
+                Span line1Value = new Span(address.getAddressLine1());
                 line1Layout.add(line1Label, line1Value);
                 line1Layout.setWidthFull();
                 line1Layout.setSpacing(false);
@@ -378,11 +361,11 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
                 addressLayout.add(line1Layout);
             }
 
-            if (address.addressLine2() != null && !address.addressLine2().isEmpty()) {
+            if (address.getAddressLine2() != null && !address.getAddressLine2().isEmpty()) {
                 HorizontalLayout line2Layout = new HorizontalLayout();
                 Span line2Label = new Span("Complemento: ");
                 line2Label.getStyle().set("font-weight", "bold");
-                Span line2Value = new Span(address.addressLine2());
+                Span line2Value = new Span(address.getAddressLine2());
                 line2Layout.add(line2Label, line2Value);
                 line2Layout.setWidthFull();
                 line2Layout.setSpacing(false);
@@ -397,17 +380,17 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
             cityStateLayout.setPadding(false);
             cityStateLayout.setMargin(false);
 
-            if (address.city() != null && !address.city().isEmpty()) {
+            if (address.getCity() != null && !address.getCity().isEmpty()) {
                 Span cityLabel = new Span("Ciudad: ");
                 cityLabel.getStyle().set("font-weight", "bold");
-                Span cityValue = new Span(address.city());
+                Span cityValue = new Span(address.getCity());
                 cityStateLayout.add(cityLabel, cityValue);
             }
 
-            if (address.state() != null && !address.state().isEmpty()) {
+            if (address.getState() != null && !address.getState().isEmpty()) {
                 Span stateLabel = new Span(" / Estado: ");
                 stateLabel.getStyle().set("font-weight", "bold");
-                Span stateValue = new Span(address.state());
+                Span stateValue = new Span(address.getState());
                 cityStateLayout.add(stateLabel, stateValue);
             }
 
@@ -419,17 +402,17 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
             zipCountryLayout.setPadding(false);
             zipCountryLayout.setMargin(false);
 
-            if (address.zipCode() != null && !address.zipCode().isEmpty()) {
+            if (address.getZipCode() != null && !address.getZipCode().isEmpty()) {
                 Span zipLabel = new Span("Código Postal: ");
                 zipLabel.getStyle().set("font-weight", "bold");
-                Span zipValue = new Span(address.zipCode());
+                Span zipValue = new Span(address.getZipCode());
                 zipCountryLayout.add(zipLabel, zipValue);
             }
 
-            if (address.country() != null && !address.country().isEmpty()) {
+            if (address.getCountry() != null && !address.getCountry().isEmpty()) {
                 Span countryLabel = new Span(" / País: ");
                 countryLabel.getStyle().set("font-weight", "bold");
-                Span countryValue = new Span(address.country());
+                Span countryValue = new Span(address.getCountry());
                 zipCountryLayout.add(countryLabel, countryValue);
             }
 
@@ -441,6 +424,7 @@ public class OrderConfirmationView extends VerticalLayout implements HasUrlParam
             }
         }
     }
+
 
     private String formatCurrency(BigDecimal amount) {
         NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
