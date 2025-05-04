@@ -27,6 +27,7 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
@@ -71,6 +72,9 @@ public class CheckoutView extends VerticalLayout {
     private final Binder<Address> addressBinder = new Binder<>();
     private final Binder<PaymentRequest> paymentBinder = new Binder<>(PaymentRequest.class);
 
+    // Selected payment method
+    private String selectedPaymentMethod = null;
+
     // Form field references
     private TextField nameField;
     private EmailField emailField;
@@ -88,6 +92,9 @@ public class CheckoutView extends VerticalLayout {
     private TextField cvvField;
 
     private final Button placeOrderButton = new Button("Place Order");
+    private Button next;
+    private Button previous;
+    private HorizontalLayout navigationButtons;
 
     private final Tabs stepTabs = new Tabs();
     private final Div stepContent = new Div();
@@ -123,7 +130,6 @@ public class CheckoutView extends VerticalLayout {
 
         stepTabs.add(customerTab, addressTab, paymentTab);
         stepTabs.setWidthFull();
-        stepTabs.addSelectedChangeListener(event -> switchTabContent(event.getSelectedTab()));
 
         Component customerSection = createCustomerSection();
         Component addressSection = createDeliveryAddressSection();
@@ -136,24 +142,39 @@ public class CheckoutView extends VerticalLayout {
         stepContent.add(customerSection);
 
         HorizontalLayout navigationButtons = new HorizontalLayout();
-        Button previous = new Button("Previous", e -> navigateStep(-1));
-        Button next = new Button("Next", e -> navigateStep(1));
+        previous = new Button("Previous", e -> navigateStep(-1));
+        next = new Button("Next", e -> navigateStep(1));
+        previous.setWidth("120px");
+        next.setWidth("120px");
         next.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        placeOrderButton.setWidth("120px");
+        placeOrderButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        placeOrderButton.addClickListener(e -> placeOrder());
+        placeOrderButton.setVisible(false);
+
         navigationButtons.add(previous, next);
         navigationButtons.setJustifyContentMode(JustifyContentMode.BETWEEN);
         navigationButtons.setWidthFull();
 
+        navigationButtons.add(placeOrderButton);
+
         CardComponent checkoutCard = new CardComponent();
         checkoutCard.add(stepTabs, stepContent, navigationButtons);
 
-        placeOrderButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        placeOrderButton.addClickListener(e -> placeOrder());
-        HorizontalLayout orderButtonLayout = new HorizontalLayout(placeOrderButton);
-        orderButtonLayout.setJustifyContentMode(JustifyContentMode.END);
-        orderButtonLayout.setWidthFull();
-        orderButtonLayout.setMargin(true);
+        add(viewTitle, orderSummaryCard, checkoutCard);
 
-        add(viewTitle, orderSummaryCard, checkoutCard, orderButtonLayout);
+        // Configurar el listener para mostrar/ocultar el botón según el tab activo
+        stepTabs.addSelectedChangeListener(event -> {
+            Tab selectedTab = event.getSelectedTab();
+            switchTabContent(selectedTab);
+
+            // Mostrar el botón Place Order solo en la pestaña de pago
+            boolean isPaymentTab = selectedTab.equals(paymentTab);
+            if (!isPaymentTab) {
+                placeOrderButton.setVisible(false);
+            }
+        });
+
         loadCart();
     }
 
@@ -176,6 +197,34 @@ public class CheckoutView extends VerticalLayout {
     private void switchTabContent(Tab selectedTab) {
         stepContent.removeAll();
         stepContent.add(tabToComponent.get(selectedTab));
+
+        // Determinar si estamos en la pestaña de pago
+        boolean isPaymentTab = selectedTab.equals(stepTabs.getComponentAt(2));
+
+        // Configurar visibilidad de botones según la pestaña
+        if (isPaymentTab) {
+            // En pestaña de pago, ocultar Next y mostrar Place Order solo cuando se seleccione un método
+            next.setVisible(false);
+
+            // Si ya hay un método de pago seleccionado, mostrar el botón Place Order
+            placeOrderButton.setVisible(selectedPaymentMethod != null);
+
+            // Asegurarse de que el botón Place Order esté en el layout de navegación
+            if (!navigationButtons.getChildren().anyMatch(c -> c == placeOrderButton)) {
+                navigationButtons.add(placeOrderButton);
+            }
+        } else {
+            // En otras pestañas, mostrar Next y ocultar Place Order
+            next.setVisible(true);
+            placeOrderButton.setVisible(false);
+
+            // Remover el botón Place Order si está en el layout
+            navigationButtons
+                    .getChildren()
+                    .filter(c -> c == placeOrderButton)
+                    .findFirst()
+                    .ifPresent(button -> navigationButtons.remove(button));
+        }
     }
 
     private void navigateStep(int direction) {
@@ -338,13 +387,159 @@ public class CheckoutView extends VerticalLayout {
     }
 
     private VerticalLayout createPaymentSection() {
-        H3 sectionTitle = new H3("Payment Details");
+        H3 sectionTitle = new H3("Select your payment method");
 
+        VerticalLayout layout = new VerticalLayout();
+        layout.setPadding(true);
+        layout.setSpacing(true);
+
+        // Container for payment options
+        HorizontalLayout paymentOptionsLayout = new HorizontalLayout();
+        paymentOptionsLayout.setWidthFull();
+        paymentOptionsLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        paymentOptionsLayout.setSpacing(true);
+        paymentOptionsLayout.getStyle().set("margin-top", "var(--lumo-space-m)");
+
+        // Div for credit card form (initially hidden)
+        Div creditCardFormDiv = new Div();
+        creditCardFormDiv.setVisible(false);
+        creditCardFormDiv.setWidth("100%");
+
+        // Create payment options with images
+        VerticalLayout creditCard = createPaymentOptionCard("Credit Card", "VISA, MasterCard, AMEX", "credit-card.png");
+
+        VerticalLayout stripeCard = createPaymentOptionCard("Stripe", "Secure payment with Stripe", "stripe.png");
+
+        VerticalLayout paypalCard = createPaymentOptionCard("PayPal", "Pay with your PayPal account", "paypal.png");
+
+        VerticalLayout mercadoPagoCard =
+                createPaymentOptionCard("Mercado Pago", "Multiple payment options", "mercadopago.png");
+
+        // Add click events to cards
+        creditCard.addClickListener(e -> {
+            selectPaymentCard(paymentOptionsLayout, creditCard);
+            creditCardFormDiv.setVisible(true);
+            selectedPaymentMethod = "credit";
+            placeOrderButton.setVisible(true);
+        });
+
+        stripeCard.addClickListener(e -> {
+            selectPaymentCard(paymentOptionsLayout, stripeCard);
+            creditCardFormDiv.setVisible(false);
+            selectedPaymentMethod = "stripe";
+            placeOrderButton.setVisible(true);
+        });
+
+        paypalCard.addClickListener(e -> {
+            selectPaymentCard(paymentOptionsLayout, paypalCard);
+            creditCardFormDiv.setVisible(false);
+            selectedPaymentMethod = "paypal";
+            placeOrderButton.setVisible(true);
+        });
+
+        mercadoPagoCard.addClickListener(e -> {
+            selectPaymentCard(paymentOptionsLayout, mercadoPagoCard);
+            creditCardFormDiv.setVisible(false);
+            selectedPaymentMethod = "mercadopago";
+            placeOrderButton.setVisible(true);
+        });
+
+        // Add cards to layout with correct spacing
+        paymentOptionsLayout.add(creditCard, stripeCard, paypalCard, mercadoPagoCard);
+        paymentOptionsLayout.setAlignItems(FlexComponent.Alignment.STRETCH);
+
+        // Create credit card form
+        FormLayout creditCardForm = createCreditCardForm();
+        creditCardFormDiv.add(creditCardForm);
+
+        // Add everything to main layout
+        layout.add(sectionTitle, paymentOptionsLayout, creditCardFormDiv);
+        layout.getStyle().set("margin-bottom", "var(--lumo-space-l)");
+
+        return layout;
+    }
+
+    private VerticalLayout createPaymentOptionCard(String title, String description, String imageName) {
+        VerticalLayout card = new VerticalLayout();
+        card.addClassName("payment-option-card");
+        card.setSpacing(false);
+        card.setPadding(true);
+        card.setAlignItems(Alignment.CENTER);
+        card.setWidth("280px"); // Make card wider
+        card.setHeight("160px"); // Fixed height to align all cards
+        card.getStyle().set("border", "1px solid var(--lumo-contrast-10pct)");
+        card.getStyle().set("border-radius", "var(--lumo-border-radius-m)");
+        card.getStyle().set("cursor", "pointer");
+        card.getStyle().set("transition", "box-shadow 0.3s, border-color 0.3s");
+        card.getStyle().set("box-shadow", "0 2px 5px rgba(0,0,0,0.05)");
+
+        // Hover effect
+        card.getElement().addEventListener("mouseover", e -> {
+            card.getStyle().set("box-shadow", "0 5px 15px rgba(0,0,0,0.1)");
+            card.getStyle().set("border-color", "var(--lumo-primary-color-50pct)");
+        });
+        card.getElement().addEventListener("mouseout", e -> {
+            card.getStyle().set("box-shadow", "0 2px 5px rgba(0,0,0,0.05)");
+            card.getStyle().set("border-color", "var(--lumo-contrast-10pct)");
+        });
+
+        // Image logo - with proper sizing
+        com.vaadin.flow.component.html.Image logo =
+                new com.vaadin.flow.component.html.Image("images/payment/" + imageName, title);
+
+        // Set fixed height to maintain consistency
+        if (imageName.equals("credit-card.png")) {
+            logo.setHeight("60px"); // Credit card image needs specific height
+        } else {
+            logo.setHeight("40px"); // Other logos need consistent height
+        }
+        logo.getStyle().set("object-fit", "contain");
+        logo.getStyle().set("margin-bottom", "1em");
+
+        // Title
+        H3 titleLabel = new H3(title);
+        titleLabel.getStyle().set("margin", "0.5em 0 0.2em 0");
+        titleLabel.getStyle().set("font-size", "1.2em");
+
+        // Description
+        Span descLabel = new Span(description);
+        descLabel.getStyle().set("color", "var(--lumo-secondary-text-color)");
+        descLabel.getStyle().set("font-size", "0.9em");
+        descLabel.getStyle().set("text-align", "center");
+
+        card.add(logo, titleLabel, descLabel);
+        return card;
+    }
+
+    private void selectPaymentCard(HorizontalLayout container, VerticalLayout selectedCard) {
+        // Remove selection from all cards
+        container.getChildren().forEach(component -> {
+            if (component instanceof VerticalLayout) {
+                VerticalLayout card = (VerticalLayout) component;
+                card.getStyle().remove("border-color");
+                card.getStyle().set("border", "1px solid var(--lumo-contrast-10pct)");
+                card.getStyle().set("box-shadow", "0 2px 5px rgba(0,0,0,0.05)");
+            }
+        });
+
+        // Mark selected card
+        selectedCard.getStyle().set("border-color", "var(--lumo-primary-color)");
+        selectedCard.getStyle().set("border-width", "2px");
+        selectedCard.getStyle().set("box-shadow", "0 5px 15px rgba(0,0,0,0.1)");
+    }
+
+    private FormLayout createCreditCardForm() {
+        // Crear el formulario de tarjeta de crédito
         FormLayout form = new FormLayout();
         form.setResponsiveSteps(
                 new FormLayout.ResponsiveStep("0", 1),
                 new FormLayout.ResponsiveStep("500px", 2),
                 new FormLayout.ResponsiveStep("900px", 3));
+
+        // Agregar título al formulario
+        H3 formTitle = new H3("Payment Details");
+        form.add(formTitle);
+        form.setColspan(formTitle, 3);
 
         cardNumberField = new TextField("Card Number");
         cardNumberField.setValueChangeMode(ValueChangeMode.EAGER);
@@ -402,11 +597,7 @@ public class CheckoutView extends VerticalLayout {
         // Add fields to form
         form.add(cardNumberField, cardHolderNameField, expiryMonthField, expiryYearField, cvvField);
 
-        VerticalLayout layout = new VerticalLayout(sectionTitle, form);
-        layout.setPadding(true);
-        layout.setSpacing(true);
-        layout.getStyle().set("margin-bottom", "var(--lumo-space-l)");
-        return layout;
+        return form;
     }
 
     private void loadCart() {
@@ -507,31 +698,69 @@ public class CheckoutView extends VerticalLayout {
                 return;
             }
 
-            // Validate payment information
-            if (!paymentBinder.isValid()) {
-                StringBuilder errorMessage = new StringBuilder("Please complete payment information:\n");
-                paymentBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
-                        .append("- ")
-                        .append(error.getMessage())
-                        .append("\n"));
-
-                Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
+            // Validate payment method is selected
+            if (selectedPaymentMethod == null) {
+                Notification.show("Please select a payment method", 3000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
-
-                // Switch to payment tab
-                stepTabs.setSelectedIndex(2);
                 return;
             }
 
-            // Extract payment data for validation
-            PaymentRequest paymentRequest = paymentBinder.getBean();
+            // Validate payment information according to the selected payment method
+            if ("credit".equals(selectedPaymentMethod)) {
+                // Validate credit card form
+                if (!paymentBinder.isValid()) {
+                    StringBuilder errorMessage = new StringBuilder("Please complete payment information:\n");
+                    paymentBinder.validate().getFieldValidationErrors().forEach(error -> errorMessage
+                            .append("- ")
+                            .append(error.getMessage())
+                            .append("\n"));
 
-            // Validate payment before processing the order
-            validatePaymentAndProceed(paymentRequest);
+                    Notification.show(errorMessage.toString(), 5000, Notification.Position.MIDDLE)
+                            .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                    return;
+                }
+
+                // Extract payment data for validation
+                PaymentRequest paymentRequest = paymentBinder.getBean();
+                validatePaymentAndProceed(paymentRequest);
+            } else {
+                // Para los otros métodos de pago simulamos un pago exitoso directamente
+                processAlternativePaymentMethod(selectedPaymentMethod);
+            }
 
         } catch (Exception e) {
             log.error("Error validating order", e);
             Notification.show("Error processing order: " + e.getMessage(), 3000, Notification.Position.MIDDLE)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
+    }
+
+    private void processAlternativePaymentMethod(String method) {
+        try {
+            // Mostrar indicador de carga
+            placeOrderButton.setEnabled(false);
+            placeOrderButton.setText("Processing " + method + " payment...");
+            placeOrderButton.setIcon(new Icon(VaadinIcon.SPINNER));
+
+            // Simulamos procesamiento del pago
+            Thread.sleep(2000);
+
+            // Restauramos el botón
+            placeOrderButton.setEnabled(true);
+            placeOrderButton.setText("Place Order");
+            placeOrderButton.setIcon(null);
+
+            // Mostramos diálogo de confirmación
+            showOrderConfirmationDialog();
+
+        } catch (Exception e) {
+            // Restauramos el botón
+            placeOrderButton.setEnabled(true);
+            placeOrderButton.setText("Place Order");
+            placeOrderButton.setIcon(null);
+
+            log.error("Error processing alternative payment", e);
+            Notification.show("Error processing payment: " + e.getMessage(), 5000, Notification.Position.MIDDLE)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
         }
     }
@@ -560,9 +789,6 @@ public class CheckoutView extends VerticalLayout {
 
                 Notification.show("Payment validation error: " + errorMsg, 5000, Notification.Position.MIDDLE)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
-
-                // Switch to payment tab
-                stepTabs.setSelectedIndex(2);
             }
         } catch (HttpClientErrorException e) {
             // Restore button
